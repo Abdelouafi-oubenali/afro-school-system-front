@@ -7,7 +7,7 @@ import { StudentAlertTable } from "../components/dashboard/StudentAlertTable";
 import { AbsenceLineChart } from "../components/dashboard/AbsenceLineChart";
 import { StudentLevelDoughnut } from "../components/dashboard/StudentLevelDoughnut";
 
-export default function Home() {
+export default function Dashboard() {
   return (
     <Layout>
       {/* STAT CARDS */}

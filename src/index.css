@@ -1,1 +1,95 @@
 @import "tailwindcss";
+
+@theme {
+    --color-navy: #1A2B4A;
+    --color-navy-md: #243557;
+    --color-navy-lt: #2F4470;
+
+    --color-teal: #0E9E8E;
+    --color-teal-lt: #16BCA8;
+
+    --color-gold: #E8A020;
+    --color-gold-lt: #F5B84C;
+
+    --color-coral: #E05C5C;
+    --color-coral-lt: #f08080;
+
+    --color-sage: #5BAD8B;
+    --color-sage-lt: #7fcca4;
+
+    --color-ice: #EEF4FB;
+    --color-slate: #6B7E9F;
+
+    --font-sans: 'DM Sans', sans-serif;
+    --font-display: 'Playfair Display', serif;
+
+    --shadow-card: 0 2px 16px rgba(26, 43, 74, .07);
+    --shadow-hover: 0 8px 28px rgba(26, 43, 74, .13);
+    --shadow-teal: 0 4px 14px rgba(14, 158, 142, .32);
+
+    --animate-slideIn: slideIn .35s ease both;
+    --animate-fadeUp: fadeUp .4s ease both;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@layer base {
+    body {
+        font-family: var(--font-sans);
+    }
+}
+
+@layer utilities {
+    .nav-active {
+        background: linear-gradient(90deg, #0E9E8E, #16BCA8);
+        box-shadow: var(--shadow-teal);
+    }
+
+    .bar-teal {
+        background: linear-gradient(90deg, #0E9E8E, #16BCA8);
+    }
+
+    .bar-coral {
+        background: #E05C5C;
+    }
+
+    .font-display {
+        font-family: var(--font-display);
+    }
+
+    .hover-bg-white-8:hover {
+        background: rgba(255, 255, 255, .08);
+    }
+}
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(26, 43, 74, .18);
+    border-radius: 99px;
+}
