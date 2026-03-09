@@ -1,4 +1,5 @@
-import { createContext, useState, ReactNode, useContext } from "react";
+import { createContext, useState, useContext } from "react";
+import type { ReactNode } from "react";
 import { authService } from "../services/authService";
 
 type User = {
@@ -17,6 +18,26 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function extractToken(data: any): string | null {
+  const candidates = [
+    data?.token,
+    data?.accessToken,
+    data?.jwt,
+    data?.access_token,
+    data?.data?.token,
+    data?.data?.accessToken,
+    data?.data?.jwt,
+  ];
+
+  for (const value of candidates) {
+    if (typeof value === "string" && value.trim().length > 0 && value !== "undefined") {
+      return value;
+    }
+  }
+
+  return null;
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,8 +49,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const data = await authService.login(email, password);
       console.log("Réponse API:", data);
-      
-      const token = data.token;
+
+      const token = extractToken(data);
+      if (!token) {
+        throw new Error("Token JWT introuvable dans la réponse de login");
+      }
+
       localStorage.setItem("token", token);
       
       // Vérifier si data.user existe ou si les infos sont directement dans data

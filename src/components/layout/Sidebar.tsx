@@ -1,5 +1,4 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 export default function Sidebar() {
@@ -24,21 +23,31 @@ export default function Sidebar() {
             <nav className="flex-1 py-4 overflow-y-auto">
                 <p className="px-5 pt-2 pb-1 text-[10px] font-semibold tracking-[.12em] uppercase text-slate">Principal</p>
 
-                <Link to="/dashboard" className="nav-active flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white text-sm font-semibold mb-1">
+                <NavLink
+                    to="/dashboard"
+                    className={({ isActive }) =>
+                        `${isActive ? "nav-active text-white font-semibold" : "text-white/60"} flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white`
+                    }
+                >
                     <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" />
                         <rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" />
                     </svg>
                     Tableau de bord
-                </Link>
+                </NavLink>
 
-                <a href="#" className="flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white/60 text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white">
+                <NavLink
+                    to="/eleves"
+                    className={({ isActive }) =>
+                        `${isActive ? "nav-active text-white font-semibold" : "text-white/60"} flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white`
+                    }
+                >
                     <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" />
                         <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" />
                     </svg>
                     Élèves
-                </a>
+                </NavLink>
 
                 <a href="#" className="flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white/60 text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white">
                     <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">

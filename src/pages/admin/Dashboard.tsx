@@ -1,11 +1,11 @@
-import React from "react";
-import Layout from "../components/layout/Layout";
-import StatCard from "../components/layout/StatCard";
-import { QuickActions } from "../components/dashboard/QuickActions";
-import { AlertsPanel } from "../components/dashboard/AlertsPanel";
-import { StudentAlertTable } from "../components/dashboard/StudentAlertTable";
-import { AbsenceLineChart } from "../components/dashboard/AbsenceLineChart";
-import { StudentLevelDoughnut } from "../components/dashboard/StudentLevelDoughnut";
+import Layout from "../../components/layout/Layout";
+import StatCard from "../../components/layout/StatCard";
+import { QuickActions } from "../../components/dashboard/QuickActions";
+import { AlertsPanel } from "../../components/dashboard/AlertsPanel";
+import { StudentAlertTable } from "../../components/dashboard/StudentAlertTable";
+import { AbsenceLineChart } from "../../components/dashboard/AbsenceLineChart";
+import { StudentLevelDoughnut } from "../../components/dashboard/StudentLevelDoughnut";
+import EleveList from "../../components/eleves/EleveList";
 
 export default function Dashboard() {
   return (
@@ -100,6 +100,9 @@ export default function Dashboard() {
         <AbsenceLineChart />
         <StudentLevelDoughnut />
       </div>
+
+      {/* ELEVES SECTION */}
+      <EleveList />
 
       {/* BOTTOM ROW */}
       <div className="grid gap-5" style={{ gridTemplateColumns: '1.4fr 1fr' }}>
