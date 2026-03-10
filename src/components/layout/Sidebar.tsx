@@ -49,12 +49,17 @@ export default function Sidebar() {
                     Élèves
                 </NavLink>
 
-                <a href="#" className="flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white/60 text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white">
+                <NavLink
+                    to="/enseignents"
+                    className={({ isActive }) =>
+                        `${isActive ? "nav-active text-white font-semibold" : "text-white/60"} flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white`
+                    }
+                >
                     <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
                     </svg>
                     Enseignants
-                </a>
+                </NavLink>
 
                 <a href="#" className="flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white/60 text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white">
                     <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
