@@ -4,6 +4,7 @@ import Dashboard from './pages/admin/Dashboard';
 import Eleves from './pages/admin/Eleves.tsx';
 import Enseignents from './pages/admin/Enseignents.tsx';
 import Admins from './pages/admin/Admins.tsx';
+import Parents from './pages/admin/Parents.tsx';
 import { useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -32,6 +33,10 @@ function App() {
         <Route
           path="/admins"
           element={user ? <Admins /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/parents"
+          element={user ? <Parents /> : <Navigate to="/login" replace />}
         />
         <Route 
           path="/" 
