@@ -11,6 +11,7 @@ export default function Eleves() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeletingDetail, setIsDeletingDetail] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
   const [listRefreshKey, setListRefreshKey] = useState(0);
   const { eleves } = useEleves(listRefreshKey);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -246,21 +247,7 @@ export default function Eleves() {
           <h2 className="font-display text-[22px] text-navy leading-tight">Gestion des élèves</h2>
           <p className="text-slate text-[13px] mt-0.5">Administration des fiches élèves, contacts et suivi</p>
         </div>
-        <div className="flex items-center gap-3 flex-wrap">
-          <button className="bg-white border border-navy/10 text-navy text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-ice transition-colors">
-            Importer CSV
-          </button>
-          <button className="bg-white border border-navy/10 text-navy text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-ice transition-colors">
-            Exporter liste
-          </button>
-          <button
-            type="button"
-            onClick={() => setIsModalOpen(true)}
-            className="nav-active text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-teal hover:opacity-95 transition-opacity"
-          >
-            + Nouvel élève
-          </button>
-        </div>
+        
       </div>
 
       <div className="grid grid-cols-3 gap-5">
@@ -323,8 +310,30 @@ export default function Eleves() {
           delay="0.15s"
         />
       </div>
+      <div className="flex items-center gap-3 flex-wrap">
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64 rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+            placeholder="Rechercher: nom, prénom, email..."
+          />
+          <button className="bg-white border border-navy/10 text-navy text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-ice transition-colors">
+            Importer CSV
+          </button>
+          <button className="bg-white border border-navy/10 text-navy text-sm font-medium px-4 py-2.5 rounded-xl hover:bg-ice transition-colors">
+            Exporter liste
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            className="nav-active text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-teal hover:opacity-95 transition-opacity"
+          >
+            + Nouvel élève
+          </button>
+        </div>
 
-      <EleveList refreshKey={listRefreshKey} onEdit={handleEdit} onView={handleView} />
+      <EleveList refreshKey={listRefreshKey} onEdit={handleEdit} onView={handleView} searchTerm={searchTerm} />
 
       {isModalOpen && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">

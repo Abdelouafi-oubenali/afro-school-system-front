@@ -7,12 +7,32 @@ interface EleveListProps {
     refreshKey?: number;
     onEdit?: (eleve: Eleve) => void;
   onView?: (eleve: Eleve) => void;
+  searchTerm?: string;
 }
 
-const EleveList: React.FC<EleveListProps> = ({ refreshKey, onEdit, onView }) => {
+const EleveList: React.FC<EleveListProps> = ({ refreshKey, onEdit, onView, searchTerm = "" }) => {
     const { eleves, loading, error, refresh } = useEleves(refreshKey);
     const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; nom: string; prenom: string } | null>(null);
     const [isDeleting, setIsDeleting] = useState(false);
+
+  const normalizedSearch = searchTerm.trim().toLowerCase();
+  const filteredEleves = normalizedSearch
+    ? eleves.filter((eleve) => {
+      const haystack = [
+        eleve.nom,
+        eleve.prenom,
+        eleve.email,
+        eleve.phone,
+        eleve.id,
+        eleve.role ?? "",
+        eleve.classe ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(normalizedSearch);
+    })
+    : eleves;
 
   const handleDeleteClick = (id: string, nom: string, prenom: string) => {
         setDeleteConfirm({ id: String(id), nom, prenom });
@@ -59,7 +79,7 @@ const EleveList: React.FC<EleveListProps> = ({ refreshKey, onEdit, onView }) => 
           <h3 className="font-display text-[16px] font-semibold text-navy">Liste des eleves</h3>
           <p className="text-slate text-[12px] mt-0.5">Suivi des comptes et contacts</p>
         </div>
-        <span className="bg-teal/10 text-teal text-[11px] font-bold px-2.5 py-1 rounded-full">{eleves.length}</span>
+        <span className="bg-teal/10 text-teal text-[11px] font-bold px-2.5 py-1 rounded-full">{filteredEleves.length}</span>
       </div>
 
       <div className="overflow-x-auto">
@@ -73,11 +93,11 @@ const EleveList: React.FC<EleveListProps> = ({ refreshKey, onEdit, onView }) => 
             </tr>
           </thead>
           <tbody>
-            {eleves.map((eleve, index) => {
+            {filteredEleves.map((eleve, index) => {
               const initials = `${eleve.prenom?.[0] ?? ""}${eleve.nom?.[0] ?? ""}`.toUpperCase();
 
               return (
-                <tr key={eleve.id} className={`hover:bg-ice transition-colors ${index !== eleves.length - 1 ? "border-b border-navy/5" : ""}`}>
+                <tr key={eleve.id} className={`hover:bg-ice transition-colors ${index !== filteredEleves.length - 1 ? "border-b border-navy/5" : ""}`}>
                   <td className="py-3 pl-2 pr-2">
                     <div className="flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-full flex items-center justify-center text-[11px] font-bold text-teal bg-teal/10 flex-shrink-0">
@@ -130,6 +150,13 @@ const EleveList: React.FC<EleveListProps> = ({ refreshKey, onEdit, onView }) => 
                 </tr>
               );
             })}
+            {filteredEleves.length === 0 && (
+              <tr>
+                <td colSpan={4} className="py-8 text-center text-[13px] text-slate">
+                  Aucun élève trouvé pour "{searchTerm}".
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
