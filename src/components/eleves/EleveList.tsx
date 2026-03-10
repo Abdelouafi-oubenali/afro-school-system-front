@@ -1,9 +1,41 @@
-import React from "react";
+import React, { useState } from "react";
 import { useEleves } from "../../hooks/useEleves";
+import eleveService from "../../services/eleveService";
+import type { Eleve } from "../../services/eleveService";
 
+interface EleveListProps {
+    refreshKey?: number;
+    onEdit?: (eleve: Eleve) => void;
+  onView?: (eleve: Eleve) => void;
+}
 
-const EleveList: React.FC = () => {
-    const { eleves, loading, error } = useEleves();
+const EleveList: React.FC<EleveListProps> = ({ refreshKey, onEdit, onView }) => {
+    const { eleves, loading, error, refresh } = useEleves(refreshKey);
+    const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; nom: string; prenom: string } | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteClick = (id: string, nom: string, prenom: string) => {
+        setDeleteConfirm({ id: String(id), nom, prenom });
+    };
+
+    const handleConfirmDelete = async () => {
+        if (!deleteConfirm) return;
+
+        try {
+            setIsDeleting(true);
+            await eleveService.deleteEleve(deleteConfirm.id);
+            setDeleteConfirm(null);
+            await refresh();
+        } catch (err) {
+            alert(err instanceof Error ? err.message : "Erreur lors de la suppression");
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
+    const handleCancelDelete = () => {
+        setDeleteConfirm(null);
+    };
     if (loading) {
         return (
             <div className="bg-white rounded-2xl p-6 shadow-card">
@@ -61,6 +93,7 @@ const EleveList: React.FC = () => {
                       <button
                         type="button"
                         title="Voir detail"
+                        onClick={() => onView?.(eleve)}
                         className="w-8 h-8 rounded-lg border border-navy/10 text-slate hover:text-teal hover:border-teal/40 hover:bg-teal/5 transition-colors flex items-center justify-center"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -71,6 +104,7 @@ const EleveList: React.FC = () => {
                       <button
                         type="button"
                         title="Modifier"
+                        onClick={() => onEdit?.(eleve)}
                         className="w-8 h-8 rounded-lg border border-navy/10 text-slate hover:text-gold hover:border-gold/40 hover:bg-gold/5 transition-colors flex items-center justify-center"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -81,6 +115,7 @@ const EleveList: React.FC = () => {
                       <button
                         type="button"
                         title="Supprimer"
+                        onClick={() => handleDeleteClick(eleve.id, eleve.nom, eleve.prenom)}
                         className="w-8 h-8 rounded-lg border border-navy/10 text-slate hover:text-coral hover:border-coral/40 hover:bg-coral/5 transition-colors flex items-center justify-center"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -98,6 +133,47 @@ const EleveList: React.FC = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-navy/60 flex items-center justify-center z-50 animate-fadeIn">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl animate-slideUp">
+            <div className="flex items-start gap-4">
+              <div className="w-12 h-12 rounded-full bg-coral/10 flex items-center justify-center flex-shrink-0">
+                <svg className="w-6 h-6 text-coral" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="font-display text-lg font-semibold text-navy mb-2">Confirmer la suppression</h3>
+                <p className="text-slate text-sm">
+                  Voulez-vous vraiment supprimer l'élève <span className="font-semibold text-navy">{deleteConfirm.prenom} {deleteConfirm.nom}</span> ?
+                  <br />
+                  Cette action est irréversible.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                type="button"
+                onClick={handleCancelDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 rounded-xl border border-navy/20 text-navy font-medium hover:bg-navy/5 transition-colors disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-coral text-white font-medium hover:bg-coral/90 transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? "Suppression..." : "Supprimer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

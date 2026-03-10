@@ -3,7 +3,19 @@ import axios from "axios";
 const API_URL = "http://localhost:8081/api";
 
 export interface Eleve {
-    id: number;
+    id: string;
+    nom: string;
+    prenom: string;
+    email: string;
+    password?: string;
+    phone: string;
+    dateNaissance: string;
+    role?: string;
+    classe?: string | null;
+    classeId?: string | null;
+}
+
+export interface EleveCreatePayload {
     nom: string;
     prenom: string;
     email: string;
@@ -12,7 +24,8 @@ export interface Eleve {
     dateNaissance: string;
 }
 
-export interface EleveCreatePayload {
+export interface EleveUpdatePayload {
+    id?: string;
     nom: string;
     prenom: string;
     email: string;
@@ -169,6 +182,89 @@ class EleveService {
         }
 
         throw new Error("Echec de creation eleve: erreur inattendue");
+    }
+
+    async updateEleve(id: string, payload: EleveUpdatePayload): Promise<Eleve> {
+        try {
+            const response = await axios.put(`${API_URL}/users/eleve/${id}`, payload, {
+                headers: this.getAuthHeaders(),
+            });
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+                const method = error.config?.method?.toUpperCase() || "PUT";
+                const url = error.config?.url || `${API_URL}/users/eleve/${id}`;
+                const data = error.response?.data as
+                    | { message?: string; error?: string; details?: string }
+                    | string
+                    | undefined;
+
+                const backendMessage =
+                    typeof data === "string"
+                        ? data
+                        : data?.message || data?.error || data?.details;
+
+                console.error("Erreur API update eleve detaillee:", {
+                    status,
+                    method,
+                    url,
+                    payload,
+                    backendMessage,
+                    responseData: data,
+                });
+
+                throw new Error(
+                    [
+                        "Echec de modification eleve",
+                        `HTTP: ${status ?? "inconnu"}`,
+                        `Route: ${method} ${url}`,
+                        backendMessage ? `Backend: ${backendMessage}` : null,
+                    ]
+                        .filter(Boolean)
+                        .join(" | ")
+                );
+            }
+
+            throw new Error("Echec de modification eleve: erreur inattendue");
+        }
+    }
+
+
+    async deleteEleve(id: string): Promise<void> {
+        try {     
+               await axios.delete(`${API_URL}/users/eleve/${id}`, {
+                headers: this.getAuthHeaders(),
+            });
+        } catch (error) {            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+                const method = error.config?.method?.toUpperCase() || "DELETE";
+                const url = error.config?.url || `${API_URL}/users/eleve/${id}`;
+                const data = error.response?.data as
+                    | { message?: string; error?: string; details?: string }
+                    | string
+                    | undefined;
+
+                const backendMessage =
+                    typeof data === "string"
+                        ? data
+                        : data?.message || data?.error || data?.details;
+
+                throw new Error(
+                    [
+                        "Echec de suppression eleve",
+                        `HTTP: ${status ?? "inconnu"}`,
+                        `Route: ${method} ${url}`,
+                        backendMessage ? `Backend: ${backendMessage}` : null,
+                    ]
+                        .filter(Boolean)
+                        .join(" | ")
+                );
+            }
+
+            console.error("Erreur inconnue lors de la suppression de l'élève:", error);
+            throw new Error("Echec de suppression eleve: erreur inattendue");
+        }
     }
 }
 
