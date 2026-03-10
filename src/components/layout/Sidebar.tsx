@@ -68,6 +68,20 @@ export default function Sidebar() {
                     Classes & Groupes
                 </a>
 
+                <NavLink
+                    to="/admins"
+                    className={({ isActive }) =>
+                        `${isActive ? "nav-active text-white font-semibold" : "text-white/60"} flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white`
+                    }
+                >
+                    <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                        <path d="M4 21v-1a3 3 0 013-3h10a3 3 0 013 3v1" />
+                    </svg>
+                    Admins
+                </NavLink>
+
                 <p className="px-5 pt-5 pb-1 text-[10px] font-semibold tracking-[.12em] uppercase text-slate">Pédagogie</p>
 
                 <a href="#" className="flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white/60 text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white">
