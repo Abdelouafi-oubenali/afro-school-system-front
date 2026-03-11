@@ -1,30 +1,34 @@
 import axios from "axios";
 
-const API_URL = "http://localhost:8081/api";
+const API_URL = import.meta.env.VITE_API_URL || "/users-service/api";
 
-export interface Parent {
+export interface Enseignent {
     id: string;
     nom: string;
     prenom: string;
     email: string;
     phone: string;
     dateNaissance: string;
+    specialite?: string | null;
+    dateEmbauche?: string | null;
     role?: string;
-    childIds?: string[];
-    children?: unknown[] | null;
+    classe?: string | null;
+    classes?: Array<string | number> | null;
+    matiere?: string | null;
 }
 
-export interface ParentCreatePayload {
+export interface EnseignentCreatePayload {
     nom: string;
     prenom: string;
     email: string;
     password: string;
     phone: string;
     dateNaissance: string;
-    childIds: string[];
+    specialite: string;
+    dateEmbauche: string;
 }
 
-export interface ParentUpdatePayload {
+export interface EnseignentUpdatePayload {
     id?: string;
     nom: string;
     prenom: string;
@@ -32,35 +36,49 @@ export interface ParentUpdatePayload {
     password: string;
     phone: string;
     dateNaissance: string;
-    childIds: string[];
+    specialite: string;
+    dateEmbauche: string;
 }
 
-class ParentService {
+class EnseignentService {
     private getAuthHeaders() {
         const rawToken = localStorage.getItem("token");
         const token = rawToken && rawToken !== "undefined" ? rawToken : null;
         return token ? { Authorization: `Bearer ${token}` } : undefined;
     }
 
-    private normalizeParentsResponse(raw: unknown): Parent[] {
-        if (Array.isArray(raw)) return raw as Parent[];
+    private normalizeEnseignentsResponse(raw: unknown): Enseignent[] {
+        if (Array.isArray(raw)) {
+            return raw as Enseignent[];
+        }
 
         if (raw && typeof raw === "object") {
             const obj = raw as Record<string, unknown>;
-            if (Array.isArray(obj.data)) return obj.data as Parent[];
-            if (Array.isArray(obj.content)) return obj.content as Parent[];
+
+            if (Array.isArray(obj.data)) {
+                return obj.data as Enseignent[];
+            }
+
+            if (Array.isArray(obj.content)) {
+                return obj.content as Enseignent[];
+            }
+
             if (obj.result && typeof obj.result === "object") {
                 const result = obj.result as Record<string, unknown>;
-                if (Array.isArray(result.data)) return result.data as Parent[];
-                if (Array.isArray(result.content)) return result.content as Parent[];
+                if (Array.isArray(result.data)) {
+                    return result.data as Enseignent[];
+                }
+                if (Array.isArray(result.content)) {
+                    return result.content as Enseignent[];
+                }
             }
         }
 
         return [];
     }
 
-    async getAllParents(): Promise<Parent[]> {
-        const candidateRoutes = ["/users/parent", "/users/parents", "/parent", "/parents"];
+    async getAllEnseignents(): Promise<Enseignent[]> {
+        const candidateRoutes = ["/users/enseignent", "/users/enseignents", "/enseignent", "/enseignents"];
         let lastError: unknown = null;
 
         for (const route of candidateRoutes) {
@@ -68,11 +86,13 @@ class ParentService {
                 const response = await axios.get(`${API_URL}${route}`, {
                     headers: this.getAuthHeaders(),
                 });
-                return this.normalizeParentsResponse(response.data);
+                return this.normalizeEnseignentsResponse(response.data);
             } catch (error) {
                 lastError = error;
 
-                if (!axios.isAxiosError(error)) continue;
+                if (!axios.isAxiosError(error)) {
+                    continue;
+                }
 
                 const data = error.response?.data as
                     | { message?: string; error?: string; details?: string }
@@ -88,14 +108,16 @@ class ParentService {
                     error.response?.status === 404 ||
                     (typeof backendMessage === "string" && backendMessage.includes("No static resource"));
 
-                if (!isMissingRoute) break;
+                if (!isMissingRoute) {
+                    break;
+                }
             }
         }
 
         if (axios.isAxiosError(lastError)) {
             const status = lastError.response?.status;
             const method = lastError.config?.method?.toUpperCase() || "GET";
-            const url = lastError.config?.url || `${API_URL}/users/parent`;
+            const url = lastError.config?.url || `${API_URL}/users/enseignent`;
             const data = lastError.response?.data as
                 | { message?: string; error?: string; details?: string }
                 | string
@@ -108,7 +130,7 @@ class ParentService {
 
             throw new Error(
                 [
-                    "Echec de chargement des parents",
+                    "Echec de chargement des enseignents",
                     `HTTP: ${status ?? "inconnu"}`,
                     `Route: ${method} ${url}`,
                     backendMessage ? `Backend: ${backendMessage}` : null,
@@ -119,11 +141,11 @@ class ParentService {
             );
         }
 
-        throw new Error("Echec de chargement des parents: erreur inattendue");
+        throw new Error("Echec de chargement des enseignents: erreur inattendue");
     }
 
-    async createParent(payload: ParentCreatePayload): Promise<Parent> {
-        const candidateRoutes = ["/users/parent", "/users/parents", "/parent", "/parents"];
+    async createEnseignent(payload: EnseignentCreatePayload): Promise<Enseignent> {
+        const candidateRoutes = ["/users/enseignent", "/users/enseignents", "/enseignent", "/enseignents"];
         let lastError: unknown = null;
 
         for (const route of candidateRoutes) {
@@ -135,7 +157,9 @@ class ParentService {
             } catch (error) {
                 lastError = error;
 
-                if (!axios.isAxiosError(error)) continue;
+                if (!axios.isAxiosError(error)) {
+                    continue;
+                }
 
                 const data = error.response?.data as
                     | { message?: string; error?: string; details?: string }
@@ -151,14 +175,16 @@ class ParentService {
                     error.response?.status === 404 ||
                     (typeof backendMessage === "string" && backendMessage.includes("No static resource"));
 
-                if (!isMissingRoute) break;
+                if (!isMissingRoute) {
+                    break;
+                }
             }
         }
 
         if (axios.isAxiosError(lastError)) {
             const status = lastError.response?.status;
             const method = lastError.config?.method?.toUpperCase() || "POST";
-            const url = lastError.config?.url || `${API_URL}/users/parent`;
+            const url = lastError.config?.url || `${API_URL}/users/enseignent`;
             const data = lastError.response?.data as
                 | { message?: string; error?: string; details?: string }
                 | string
@@ -171,7 +197,7 @@ class ParentService {
 
             throw new Error(
                 [
-                    "Echec de creation parent",
+                    "Echec de creation enseignent",
                     `HTTP: ${status ?? "inconnu"}`,
                     `Route: ${method} ${url}`,
                     backendMessage ? `Backend: ${backendMessage}` : null,
@@ -181,12 +207,12 @@ class ParentService {
             );
         }
 
-        throw new Error("Echec de creation parent: erreur inattendue");
+        throw new Error("Echec de creation enseignent: erreur inattendue");
     }
 
-    async updateParent(id: string, payload: ParentUpdatePayload): Promise<Parent> {
+    async updateEnseignent(id: string, payload: EnseignentUpdatePayload): Promise<Enseignent> {
         try {
-            const response = await axios.put(`${API_URL}/users/parent/${id}`, payload, {
+            const response = await axios.put(`${API_URL}/users/enseignent/${id}`, payload, {
                 headers: this.getAuthHeaders(),
             });
             return response.data;
@@ -194,7 +220,7 @@ class ParentService {
             if (axios.isAxiosError(error)) {
                 const status = error.response?.status;
                 const method = error.config?.method?.toUpperCase() || "PUT";
-                const url = error.config?.url || `${API_URL}/users/parent/${id}`;
+                const url = error.config?.url || `${API_URL}/users/enseignent/${id}`;
                 const data = error.response?.data as
                     | { message?: string; error?: string; details?: string }
                     | string
@@ -207,7 +233,7 @@ class ParentService {
 
                 throw new Error(
                     [
-                        "Echec de modification parent",
+                        "Echec de modification enseignent",
                         `HTTP: ${status ?? "inconnu"}`,
                         `Route: ${method} ${url}`,
                         backendMessage ? `Backend: ${backendMessage}` : null,
@@ -217,20 +243,20 @@ class ParentService {
                 );
             }
 
-            throw new Error("Echec de modification parent: erreur inattendue");
+            throw new Error("Echec de modification enseignent: erreur inattendue");
         }
     }
 
-    async deleteParent(id: string): Promise<void> {
+    async deleteEnseignent(id: string): Promise<void> {
         try {
-            await axios.delete(`${API_URL}/users/parent/${id}`, {
+            await axios.delete(`${API_URL}/users/enseignent/${id}`, {
                 headers: this.getAuthHeaders(),
             });
         } catch (error) {
             if (axios.isAxiosError(error)) {
                 const status = error.response?.status;
                 const method = error.config?.method?.toUpperCase() || "DELETE";
-                const url = error.config?.url || `${API_URL}/users/parent/${id}`;
+                const url = error.config?.url || `${API_URL}/users/enseignent/${id}`;
                 const data = error.response?.data as
                     | { message?: string; error?: string; details?: string }
                     | string
@@ -243,7 +269,7 @@ class ParentService {
 
                 throw new Error(
                     [
-                        "Echec de suppression parent",
+                        "Echec de suppression enseignent",
                         `HTTP: ${status ?? "inconnu"}`,
                         `Route: ${method} ${url}`,
                         backendMessage ? `Backend: ${backendMessage}` : null,
@@ -253,11 +279,11 @@ class ParentService {
                 );
             }
 
-            throw new Error("Echec de suppression parent: erreur inattendue");
+            throw new Error("Echec de suppression enseignent: erreur inattendue");
         }
     }
 }
 
-const parentService = new ParentService();
+const enseignentService = new EnseignentService();
 
-export default parentService;
+export default enseignentService;

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useEnseignents } from "../../hooks/useEnseignents";
-import enseignentService from "../../services/enseignentService";
-import type { Enseignent } from "../../services/enseignentService";
+import enseignentService from "../../services/user/enseignentService";
+import type { Enseignent } from "../../services/user/enseignentService";
 
 interface EnseignentListProps {
     refreshKey?: number;

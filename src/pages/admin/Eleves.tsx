@@ -3,8 +3,8 @@ import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import EleveList from "../../components/eleves/EleveList";
 import { useEleves } from "../../hooks/useEleves";
-import eleveService from "../../services/eleveService";
-import type { EleveCreatePayload, Eleve, EleveUpdatePayload } from "../../services/eleveService";
+import eleveService from "../../services/user/eleveService";
+import type { EleveCreatePayload, Eleve, EleveUpdatePayload } from "../../services/user/eleveService";
 
 export default function Eleves() {
   const [isModalOpen, setIsModalOpen] = useState(false);

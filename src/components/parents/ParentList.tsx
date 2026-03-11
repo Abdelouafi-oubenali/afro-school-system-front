@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useParents } from "../../hooks/useParents";
-import parentService from "../../services/parentService";
-import type { Parent } from "../../services/parentService";
+import parentService from "../../services/user/parentService";
+import type { Parent } from "../../services/user/parentService";
 
 interface ParentListProps {
     refreshKey?: number;

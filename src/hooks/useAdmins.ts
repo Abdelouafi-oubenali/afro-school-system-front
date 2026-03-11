@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import adminService from "../services/adminService";
-import type { Admin } from "../services/adminService";
+import adminService from "../services/user/adminService";
+import type { Admin } from "../services/user/adminService";
 
 export function useAdmins(refreshKey?: number) {
     const [admins, setAdmins] = useState<Admin[]>([]);

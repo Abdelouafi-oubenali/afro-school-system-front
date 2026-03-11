@@ -3,8 +3,8 @@ import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import EnseignentList from "../../components/enseignents/EnseignentList";
 import { useEnseignents } from "../../hooks/useEnseignents";
-import enseignentService from "../../services/enseignentService";
-import type { Enseignent, EnseignentCreatePayload, EnseignentUpdatePayload } from "../../services/enseignentService";
+import enseignentService from "../../services/user/enseignentService";
+import type { Enseignent, EnseignentCreatePayload, EnseignentUpdatePayload } from "../../services/user/enseignentService";
 
 export default function Enseignents() {
     const [isModalOpen, setIsModalOpen] = useState(false);

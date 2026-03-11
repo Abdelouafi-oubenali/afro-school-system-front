@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useAdmins } from "../../hooks/useAdmins";
-import adminService from "../../services/adminService";
-import type { Admin } from "../../services/adminService";
+import adminService from "../../services/user/adminService";
+import type { Admin } from "../../services/user/adminService";
 
 interface AdminListProps {
     refreshKey?: number;

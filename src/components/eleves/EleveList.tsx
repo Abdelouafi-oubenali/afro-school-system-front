@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useEleves } from "../../hooks/useEleves";
-import eleveService from "../../services/eleveService";
-import type { Eleve } from "../../services/eleveService";
+import eleveService from "../../services/user/eleveService";
+import type { Eleve } from "../../services/user/eleveService";
 
 interface EleveListProps {
     refreshKey?: number;

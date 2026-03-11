@@ -1,6 +1,6 @@
 import { createContext, useState, useContext } from "react";
 import type { ReactNode } from "react";
-import { authService } from "../services/authService";
+import { authService } from "../services/user/authService";
 
 type User = {
   id: string;

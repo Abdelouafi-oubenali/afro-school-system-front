@@ -3,8 +3,8 @@ import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import AdminList from "../../components/admins/AdminList";
 import { useAdmins } from "../../hooks/useAdmins";
-import adminService from "../../services/adminService";
-import type { Admin, AdminCreatePayload, AdminUpdatePayload } from "../../services/adminService";
+import adminService from "../../services/user/adminService";
+import type { Admin, AdminCreatePayload, AdminUpdatePayload } from "../../services/user/adminService";
 
 export default function Admins() {
     const [isModalOpen, setIsModalOpen] = useState(false);

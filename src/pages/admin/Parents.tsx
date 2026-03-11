@@ -3,8 +3,8 @@ import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import ParentList from "../../components/parents/ParentList";
 import { useParents } from "../../hooks/useParents";
-import parentService from "../../services/parentService";
-import type { Parent, ParentCreatePayload, ParentUpdatePayload } from "../../services/parentService";
+import parentService from "../../services/user/parentService";
+import type { Parent, ParentCreatePayload, ParentUpdatePayload } from "../../services/user/parentService";
 
 export default function Parents() {
     const [isModalOpen, setIsModalOpen] = useState(false);

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import enseignentService from "../services/enseignentService";
-import type { Enseignent } from "../services/enseignentService";
+import enseignentService from "../services/user/enseignentService";
+import type { Enseignent } from "../services/user/enseignentService";
 
 export function useEnseignents(refreshKey?: number) {
     const [enseignents, setEnseignents] = useState<Enseignent[]>([]);

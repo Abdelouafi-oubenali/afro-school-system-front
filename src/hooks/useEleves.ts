@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import eleveService from "../services/eleveService";
-import type { Eleve } from "../services/eleveService";
+import eleveService from "../services/user/eleveService";
+import type { Eleve } from "../services/user/eleveService";
 
 export function useEleves(refreshKey?: number) {
     const [eleves, setEleves] = useState<Eleve[]>([]);

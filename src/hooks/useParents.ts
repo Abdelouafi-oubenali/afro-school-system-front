@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import parentService from "../services/parentService";
-import type { Parent } from "../services/parentService";
+import parentService from "../services/user/parentService";
+import type { Parent } from "../services/user/parentService";
 
 export function useParents(refreshKey?: number) {
     const [parents, setParents] = useState<Parent[]>([]);
