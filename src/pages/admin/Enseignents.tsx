@@ -4,7 +4,29 @@ import StatCard from "../../components/layout/StatCard";
 import EnseignentList from "../../components/enseignents/EnseignentList";
 import { useEnseignents } from "../../hooks/useEnseignents";
 import enseignentService from "../../services/user/enseignentService";
+import seanceService from "../../services/user/seanceService";
 import type { Enseignent, EnseignentCreatePayload, EnseignentUpdatePayload } from "../../services/user/enseignentService";
+import type { EmploiEntry } from "../../services/user/seanceService";
+
+const JOUR_LABELS: Record<string, string> = {
+    MONDAY: "Lundi",
+    TUESDAY: "Mardi",
+    WEDNESDAY: "Mercredi",
+    THURSDAY: "Jeudi",
+    FRIDAY: "Vendredi",
+    SATURDAY: "Samedi",
+    SUNDAY: "Dimanche",
+};
+
+const JOUR_ORDER: Record<string, number> = {
+    MONDAY: 1,
+    TUESDAY: 2,
+    WEDNESDAY: 3,
+    THURSDAY: 4,
+    FRIDAY: 5,
+    SATURDAY: 6,
+    SUNDAY: 7,
+};
 
 export default function Enseignents() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -16,6 +38,9 @@ export default function Enseignents() {
     const { enseignents } = useEnseignents(listRefreshKey);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [selectedEnseignent, setSelectedEnseignent] = useState<Enseignent | null>(null);
+    const [emploiEnseignant, setEmploiEnseignant] = useState<EmploiEntry[]>([]);
+    const [loadingEmploiEnseignant, setLoadingEmploiEnseignant] = useState(false);
+    const [emploiEnseignantError, setEmploiEnseignantError] = useState<string | null>(null);
     const [formData, setFormData] = useState<EnseignentCreatePayload>({
         nom: "",
         prenom: "",
@@ -67,10 +92,28 @@ export default function Enseignents() {
         setIsModalOpen(true);
     };
 
-    const handleView = (item: Enseignent) => {
+    const handleView = async (item: Enseignent) => {
         setSelectedEnseignent(item);
         setIsModalOpen(false);
         setFormError(null);
+        setEmploiEnseignant([]);
+        setEmploiEnseignantError(null);
+
+        try {
+            setLoadingEmploiEnseignant(true);
+            const emploi = await seanceService.getEmploiByEnseignant(item.id);
+            const sortedEmploi = [...emploi].sort((a, b) => {
+                const dayA = a.jour ? (JOUR_ORDER[a.jour] ?? 99) : 99;
+                const dayB = b.jour ? (JOUR_ORDER[b.jour] ?? 99) : 99;
+                if (dayA !== dayB) return dayA - dayB;
+                return (a.heureDebut || "99:99:99").localeCompare(b.heureDebut || "99:99:99");
+            });
+            setEmploiEnseignant(sortedEmploi);
+        } catch (error) {
+            setEmploiEnseignantError(error instanceof Error ? error.message : "Erreur chargement emploi du temps");
+        } finally {
+            setLoadingEmploiEnseignant(false);
+        }
     };
 
     const handleDeleteFromDetail = async () => {
@@ -164,6 +207,60 @@ export default function Enseignents() {
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Spécialité</p><p className="text-sm font-medium text-navy">{selectedEnseignent.specialite || selectedEnseignent.matiere || "-"}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Date d'embauche</p><p className="text-sm font-medium text-navy">{formatDisplayDate(selectedEnseignent.dateEmbauche || "")}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Classes</p><p className="text-sm font-medium text-navy">{selectedEnseignent.classes?.length ? selectedEnseignent.classes.join(", ") : (selectedEnseignent.classe || "-")}</p></div>
+                    </div>
+
+                    <div className="border-t border-navy/8 pt-5 mt-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-display text-[16px] font-semibold text-navy">Emploi du temps de l'enseignant</h3>
+                            <span className="bg-teal/10 text-teal text-[11px] font-bold px-2.5 py-1 rounded-full">{emploiEnseignant.length}</span>
+                        </div>
+
+                        {loadingEmploiEnseignant ? (
+                            <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-ice/40 border border-navy/5">
+                                <p className="text-slate text-sm">Chargement de l'emploi du temps...</p>
+                            </div>
+                        ) : emploiEnseignantError ? (
+                            <div className="p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm">{emploiEnseignantError}</div>
+                        ) : emploiEnseignant.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-ice/40 border border-navy/5">
+                                <p className="text-slate text-sm">Aucune seance trouvee pour cet enseignant</p>
+                            </div>
+                        ) : (
+                            <div className="overflow-x-auto">
+                                <table className="w-full">
+                                    <thead>
+                                        <tr className="border-b-2 border-ice">
+                                            <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 pl-2">Jour</th>
+                                            <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 px-2">Heure debut</th>
+                                            <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 px-2">Heure fin</th>
+                                            <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 px-2">Matiere</th>
+                                            <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 px-2">Classe</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {emploiEnseignant.map((emploi, idx) => {
+                                            const hasMissingJour = !emploi.jour;
+                                            const hasMissingStart = !emploi.heureDebut;
+                                            const hasMissingEnd = !emploi.heureFin;
+                                            const hasInvalid = hasMissingJour || hasMissingStart || hasMissingEnd;
+                                            const jourLabel = emploi.jour ? (JOUR_LABELS[emploi.jour] || emploi.jour) : "Jour manquant";
+                                            const startLabel = emploi.heureDebut ? emploi.heureDebut.slice(0, 5) : "Heure manquante";
+                                            const endLabel = emploi.heureFin ? emploi.heureFin.slice(0, 5) : "Heure manquante";
+
+                                            return (
+                                                <tr key={emploi.id} className={`hover:bg-ice transition-colors ${idx !== emploiEnseignant.length - 1 ? "border-b border-navy/5" : ""} ${hasInvalid ? "bg-coral/5" : ""}`}>
+                                                    <td className={`py-3 pl-2 pr-2 text-[13px] ${hasMissingJour ? "text-coral font-semibold" : "text-navy"}`}>{jourLabel}</td>
+                                                    <td className={`py-3 px-2 text-[13px] ${hasMissingStart ? "text-coral font-semibold" : "text-navy"}`}>{startLabel}</td>
+                                                    <td className={`py-3 px-2 text-[13px] ${hasMissingEnd ? "text-coral font-semibold" : "text-navy"}`}>{endLabel}</td>
+                                                    <td className="py-3 px-2 text-[13px] text-slate">{emploi.matiereNom || emploi.matiereId}</td>
+                                                    <td className="py-3 px-2 text-[13px] text-slate">{emploi.classeNom || emploi.classeId}</td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             ) : (

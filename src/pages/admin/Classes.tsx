@@ -6,10 +6,51 @@ import { useClasses } from "../../hooks/useClasses";
 import { useEleves } from "../../hooks/useEleves";
 import classService from "../../services/user/classService";
 import enseignentService from "../../services/user/enseignentService";
+import seanceService from "../../services/user/seanceService";
 import type { ClassRoom, ClassCreatePayload, ClassUpdatePayload } from "../../services/user/classService";
 import type { Enseignent } from "../../services/user/enseignentService";
+import type { EmploiEntry } from "../../services/user/seanceService";
 
 const LEVEL_OPTIONS = ["MATERNELLE", "PRIMAIRE", "COLLEGE", "LYCEE"];
+
+const JOUR_LABELS: Record<string, string> = {
+    MONDAY: "Lundi",
+    TUESDAY: "Mardi",
+    WEDNESDAY: "Mercredi",
+    THURSDAY: "Jeudi",
+    FRIDAY: "Vendredi",
+    SATURDAY: "Samedi",
+    SUNDAY: "Dimanche",
+};
+
+const JOUR_ORDER: Record<string, number> = {
+    MONDAY: 1,
+    TUESDAY: 2,
+    WEDNESDAY: 3,
+    THURSDAY: 4,
+    FRIDAY: 5,
+    SATURDAY: 6,
+    SUNDAY: 7,
+};
+
+const WEEK_DAYS = [
+    { key: "MONDAY", label: "Lundi" },
+    { key: "TUESDAY", label: "Mardi" },
+    { key: "WEDNESDAY", label: "Mercredi" },
+    { key: "THURSDAY", label: "Jeudi" },
+    { key: "FRIDAY", label: "Vendredi" },
+] as const;
+
+const WEEK_DAY_SET: Set<string> = new Set(WEEK_DAYS.map((d) => d.key));
+
+const TIME_SLOTS = Array.from({ length: 10 }, (_, i) => {
+    const start = 8 + i;
+    const end = start + 1;
+    return {
+        key: `${String(start).padStart(2, "0")}:00`,
+        label: `${String(start).padStart(2, "0")}:00 - ${String(end).padStart(2, "0")}:00`,
+    };
+});
 
 export default function Classes() {
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -29,6 +70,9 @@ export default function Classes() {
     const [listRefreshKey, setListRefreshKey] = useState(0);
     const [enseignants, setEnseignants] = useState<Enseignent[]>([]);
     const [loadingEnseignants, setLoadingEnseignants] = useState(false);
+    const [emploiClasse, setEmploiClasse] = useState<EmploiEntry[]>([]);
+    const [loadingEmploiClasse, setLoadingEmploiClasse] = useState(false);
+    const [emploiClasseError, setEmploiClasseError] = useState<string | null>(null);
     const { classes } = useClasses(listRefreshKey);
     const { eleves, loading: loadingEleves, error: elevesError } = useEleves();
     const [editingId, setEditingId] = useState<string | null>(null);
@@ -75,9 +119,20 @@ export default function Classes() {
         setIsAssignEnseignantModalOpen(false);
         setFormError(null);
         setAssignError(null);
+        setEmploiClasse([]);
+        setEmploiClasseError(null);
 
         try {
             const enseignants = await classService.getClassEnseignants(item.id);
+            setLoadingEmploiClasse(true);
+            const emploi = await seanceService.getEmploiByClasse(item.id);
+            const sortedEmploi = [...emploi].sort((a, b) => {
+                const dayA = a.jour ? (JOUR_ORDER[a.jour] ?? 99) : 99;
+                const dayB = b.jour ? (JOUR_ORDER[b.jour] ?? 99) : 99;
+                if (dayA !== dayB) return dayA - dayB;
+                return (a.heureDebut || "99:99:99").localeCompare(b.heureDebut || "99:99:99");
+            });
+            setEmploiClasse(sortedEmploi);
             setSelectedClass((prev) =>
                 prev && prev.id === item.id
                     ? {
@@ -86,7 +141,8 @@ export default function Classes() {
                       }
                     : prev
             );
-        } catch {
+        } catch (error) {
+            setEmploiClasseError(error instanceof Error ? error.message : "Erreur chargement emploi du temps");
             setSelectedClass((prev) =>
                 prev && prev.id === item.id
                     ? {
@@ -95,6 +151,8 @@ export default function Classes() {
                       }
                     : prev
             );
+        } finally {
+            setLoadingEmploiClasse(false);
         }
     };
 
@@ -236,6 +294,29 @@ export default function Classes() {
           })
         : eleves;
 
+    const invalidEmploiEntries = emploiClasse.filter((entry) => {
+        if (!entry.jour || !entry.heureDebut || !entry.heureFin) return true;
+        return !WEEK_DAY_SET.has(entry.jour);
+    });
+
+    const weeklyCells = new Map<string, EmploiEntry[]>();
+    for (const entry of emploiClasse) {
+        if (!entry.jour || !entry.heureDebut || !entry.heureFin || !WEEK_DAY_SET.has(entry.jour)) continue;
+
+        const startHour = Number.parseInt(entry.heureDebut.slice(0, 2), 10);
+        const endHour = Number.parseInt(entry.heureFin.slice(0, 2), 10);
+        if (Number.isNaN(startHour) || Number.isNaN(endHour) || endHour <= startHour) continue;
+
+        for (let hour = startHour; hour < endHour; hour += 1) {
+            if (hour < 8 || hour >= 18) continue;
+            const slotKey = `${String(hour).padStart(2, "0")}:00`;
+            const cellKey = `${entry.jour}-${slotKey}`;
+            const list = weeklyCells.get(cellKey) ?? [];
+            list.push(entry);
+            weeklyCells.set(cellKey, list);
+        }
+    }
+
     return (
         <Layout>
             {selectedClass ? (
@@ -356,6 +437,80 @@ export default function Classes() {
                                         })}
                                     </tbody>
                                 </table>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="border-t border-navy/8 pt-5">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-display text-[16px] font-semibold text-navy">Emploi du temps de la classe</h3>
+                            <span className="bg-coral/10 text-coral text-[11px] font-bold px-2.5 py-1 rounded-full">{emploiClasse.length}</span>
+                        </div>
+
+                        {loadingEmploiClasse ? (
+                            <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-ice/40 border border-navy/5">
+                                <p className="text-slate text-sm">Chargement de l'emploi du temps...</p>
+                            </div>
+                        ) : emploiClasseError ? (
+                            <div className="p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm">{emploiClasseError}</div>
+                        ) : emploiClasse.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-10 rounded-xl bg-ice/40 border border-navy/5">
+                                <p className="text-slate text-sm">Aucune seance trouvee pour cette classe</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full min-w-[900px]">
+                                        <thead>
+                                            <tr className="border-b-2 border-ice">
+                                                <th className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 pl-2 pr-2">Heure</th>
+                                                {WEEK_DAYS.map((day) => (
+                                                    <th key={day.key} className="text-left text-[11px] font-semibold tracking-wider uppercase text-slate pb-3 px-2">
+                                                        {day.label}
+                                                    </th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {TIME_SLOTS.map((slot, rowIdx) => (
+                                                <tr key={slot.key} className={`${rowIdx !== TIME_SLOTS.length - 1 ? "border-b border-navy/5" : ""}`}>
+                                                    <td className="py-3 pl-2 pr-2 text-[12px] font-semibold text-navy whitespace-nowrap">{slot.label}</td>
+                                                    {WEEK_DAYS.map((day) => {
+                                                        const entries = weeklyCells.get(`${day.key}-${slot.key}`) ?? [];
+                                                        return (
+                                                            <td key={`${day.key}-${slot.key}`} className="py-2 px-2 align-top">
+                                                                {entries.length === 0 ? (
+                                                                    <span className="text-[12px] text-slate">-</span>
+                                                                ) : (
+                                                                    <div className="space-y-1">
+                                                                        {entries.map((entry) => (
+                                                                            <div key={entry.id} className="rounded-lg border border-teal/20 bg-teal/5 px-2 py-1">
+                                                                                <p className="text-[12px] font-semibold text-navy leading-tight">{entry.matiereNom || entry.matiereId}</p>
+                                                                            </div>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                {invalidEmploiEntries.length > 0 && (
+                                    <div className="p-3 rounded-xl bg-coral/10 border border-coral/20">
+                                        <p className="text-coral text-sm font-semibold mb-2">Donnees invalides detectees (jour/heure manquants)</p>
+                                        <div className="space-y-1">
+                                            {invalidEmploiEntries.map((entry) => (
+                                                <p key={entry.id} className="text-coral text-xs break-all">
+                                                    {entry.id} | {entry.jour ? JOUR_LABELS[entry.jour] || entry.jour : "Jour manquant"} | {entry.heureDebut || "Heure debut manquante"} - {entry.heureFin || "Heure fin manquante"}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
