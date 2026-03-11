@@ -6,12 +6,15 @@ import { StudentAlertTable } from "../../components/dashboard/StudentAlertTable"
 import { AbsenceLineChart } from "../../components/dashboard/AbsenceLineChart";
 import { StudentLevelDoughnut } from "../../components/dashboard/StudentLevelDoughnut";
 import EleveList from "../../components/eleves/EleveList";
+import { useClasses } from "../../hooks/useClasses";
 
 export default function Dashboard() {
+  const { classes } = useClasses();
+
   return (
     <Layout>
       {/* STAT CARDS */}
-      <div className="grid grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-5">
         <StatCard
           title="Élèves inscrits"
           value="847"
@@ -70,6 +73,25 @@ export default function Dashboard() {
             trendBg: "rgba(224,92,92,.12)", trendColor: "#E05C5C"
           }}
           delay="0.15s"
+        />
+        <StatCard
+          title="Classes actives"
+          value={classes.length}
+          icon={(
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M3 21h18" /><rect x="5" y="9" width="4" height="8" /><rect x="10" y="5" width="4" height="12" /><rect x="15" y="11" width="4" height="6" />
+            </svg>
+          )}
+          trendValue="Classes configurees"
+          trendIcon={(
+            <svg className="w-3 h-3" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24"><polyline points="18 15 12 9 6 15" /></svg>
+          )}
+          colorTheme={{
+            gradient: "linear-gradient(90deg,#3A7BD5,#5BA7FF)",
+            iconBg: "rgba(58,123,213,.1)", iconColor: "#3A7BD5",
+            trendBg: "rgba(58,123,213,.15)", trendColor: "#3A7BD5"
+          }}
+          delay="0.18s"
         />
         <StatCard
           title="Paiements à jour"

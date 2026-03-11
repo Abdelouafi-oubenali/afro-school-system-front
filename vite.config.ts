@@ -11,6 +11,10 @@ export default defineConfig({
         target: "http://localhost:8080",
         changeOrigin: true,
       },
+      "/class-service": {
+        target: "http://localhost:8080",
+        changeOrigin: true,
+      },
     },
   },
 })

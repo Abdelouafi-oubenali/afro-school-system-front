@@ -76,12 +76,30 @@ export default function Sidebar() {
                     Enseignants
                 </NavLink>
 
-                <a href="#" className="flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-white/60 text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white">
+                <NavLink
+                    to="/classes"
+                    className={({ isActive }) =>
+                        `${isActive ? "nav-active text-white font-semibold" : "text-white/60"} flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white`
+                    }
+                >
                     <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" />
                     </svg>
                     Classes & Groupes
-                </a>
+                </NavLink>
+
+                <NavLink
+                    to="/matieres"
+                    className={({ isActive }) =>
+                        `${isActive ? "nav-active text-white font-semibold" : "text-white/60"} flex items-center gap-3 mx-3 px-4 py-[10px] rounded-xl text-sm mb-1 transition-colors hover-bg-white-8 hover:text-white`
+                    }
+                >
+                    <svg className="w-[17px] h-[17px] flex-shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M4 19.5A2.5 2.5 0 016.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" />
+                    </svg>
+                    Matieres
+                </NavLink>
 
                 <NavLink
                     to="/admins"

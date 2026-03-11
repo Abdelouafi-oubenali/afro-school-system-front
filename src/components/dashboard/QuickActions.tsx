@@ -1,8 +1,8 @@
-import React from "react";
+import { Link } from "react-router-dom";
 
 export function QuickActions() {
     return (
-        <div className="grid grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
             <button className="bg-white border border-navy/8 rounded-xl p-4 flex items-center gap-3 text-[13px] font-medium text-navy hover:border-teal hover:bg-teal/5 hover:-translate-y-0.5 shadow-card transition-all duration-200">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-teal/10 flex-shrink-0">
                     <svg className="w-[18px] h-[18px] text-teal" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -29,6 +29,14 @@ export function QuickActions() {
                 </div>
                 Générer bulletin
             </button>
+            <Link to="/classes" className="bg-white border border-navy/8 rounded-xl p-4 flex items-center gap-3 text-[13px] font-medium text-navy hover:border-blue-500/40 hover:bg-blue-50 hover:-translate-y-0.5 shadow-card transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-blue-100 flex-shrink-0">
+                    <svg className="w-[18px] h-[18px] text-blue-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M3 21h18" /><rect x="5" y="9" width="4" height="8" /><rect x="10" y="5" width="4" height="12" /><rect x="15" y="11" width="4" height="6" />
+                    </svg>
+                </div>
+                Gérer classes
+            </Link>
             <button className="bg-white border border-navy/8 rounded-xl p-4 flex items-center gap-3 text-[13px] font-medium text-navy hover:border-navy/30 hover:bg-navy/5 hover:-translate-y-0.5 shadow-card transition-all duration-200">
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate/10 flex-shrink-0">
                     <svg className="w-[18px] h-[18px] text-slate" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
