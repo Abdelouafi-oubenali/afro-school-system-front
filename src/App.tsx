@@ -8,6 +8,7 @@ import Parents from './pages/admin/Parents.tsx';
 import Classes from './pages/admin/Classes.tsx';
 import Matieres from './pages/admin/Matieres.tsx';
 import Seances from './pages/admin/Seances.tsx';
+import Absences from './pages/admin/Absences.tsx';
 import { useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -52,6 +53,10 @@ function App() {
         <Route
           path="/seances"
           element={user ? <Seances /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/absences"
+          element={user ? <Absences /> : <Navigate to="/login" replace />}
         />
         <Route 
           path="/" 
