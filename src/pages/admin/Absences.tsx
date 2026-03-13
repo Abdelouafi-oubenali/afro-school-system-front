@@ -7,7 +7,20 @@ import { useEnseignents } from "../../hooks/useEnseignents";
 import seanceService from "../../services/user/seanceService";
 import type { Seance } from "../../services/user/seanceService";
 import absenceService from "../../services/user/absenceService";
-import type { Absence, AbsenceBulkPayload, AbsenceType } from "../../services/user/absenceService";
+import type { Absence, AbsenceBulkPayload, AbsenceFilterParams, AbsenceType } from "../../services/user/absenceService";
+
+const EMPTY_FILTERS: AbsenceFilterParams = {
+    date: "",
+    classeId: "",
+    heureDebut: "",
+    heureFin: "",
+};
+
+const normalizeTimeValue = (value: string) => {
+    const raw = value.trim();
+    if (!raw) return "";
+    return raw.length === 5 ? `${raw}:00` : raw;
+};
 
 export default function Absences() {
     const { classes } = useClasses();
@@ -19,6 +32,8 @@ export default function Absences() {
     const [loadingAbsences, setLoadingAbsences] = useState(false);
     const [absencesError, setAbsencesError] = useState<string | null>(null);
     const [absencesRefreshKey, setAbsencesRefreshKey] = useState(0);
+    const [filters, setFilters] = useState<AbsenceFilterParams>(EMPTY_FILTERS);
+    const [appliedFilters, setAppliedFilters] = useState<AbsenceFilterParams>({});
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
@@ -43,16 +58,33 @@ export default function Absences() {
     }, []);
 
     useEffect(() => {
-        setLoadingAbsences(true);
-        setAbsencesError(null);
-        absenceService.getAllAbsences()
-            .then((data) => { setAbsences(data); setLoadingAbsences(false); })
-            .catch((err) => {
+        const loadAbsences = async () => {
+            setLoadingAbsences(true);
+            setAbsencesError(null);
+
+            try {
+                const hasFilters = Boolean(
+                    appliedFilters.date ||
+                    appliedFilters.classeId ||
+                    appliedFilters.heureDebut ||
+                    appliedFilters.heureFin
+                );
+
+                const data = hasFilters
+                    ? await absenceService.filterAbsences(appliedFilters)
+                    : await absenceService.getAllAbsences();
+
+                setAbsences(data);
+            } catch (err) {
                 setAbsencesError(err instanceof Error ? err.message : "Erreur de chargement");
                 setAbsences([]);
+            } finally {
                 setLoadingAbsences(false);
-            });
-    }, [absencesRefreshKey]);
+            }
+        };
+
+        void loadAbsences();
+    }, [absencesRefreshKey, appliedFilters]);
 
     const classEleves = useMemo(() =>
         selectedClasseId ? eleves.filter((e) => e.classeId === selectedClasseId || e.classe === selectedClasseId) : [],
@@ -150,6 +182,28 @@ export default function Absences() {
     const totalAbsences = absences.filter((a) => a.type === "ABSENCE").length;
     const totalRetards = absences.filter((a) => a.type === "RETARD").length;
     const withMotif = absences.filter((a) => a.motif).length;
+
+    const hasActiveFilters = Boolean(
+        appliedFilters.date ||
+        appliedFilters.classeId ||
+        appliedFilters.heureDebut ||
+        appliedFilters.heureFin
+    );
+
+    const handleApplyFilters = () => {
+        setAbsencesError(null);
+        setAppliedFilters({
+            date: filters.date?.trim() || "",
+            classeId: filters.classeId?.trim() || "",
+            heureDebut: normalizeTimeValue(filters.heureDebut || ""),
+            heureFin: normalizeTimeValue(filters.heureFin || ""),
+        });
+    };
+
+    const handleResetFilters = () => {
+        setFilters(EMPTY_FILTERS);
+        setAppliedFilters({});
+    };
 
     return (
         <Layout>
@@ -394,6 +448,72 @@ export default function Absences() {
                         >
                             Actualiser
                         </button>
+                    </div>
+
+                    <div className="px-6 py-4 border-b border-ice bg-ice/20">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div>
+                                <label className="block text-xs font-semibold text-slate mb-1 uppercase tracking-wide">Date</label>
+                                <input
+                                    type="date"
+                                    value={filters.date || ""}
+                                    onChange={(e) => setFilters((prev) => ({ ...prev, date: e.target.value }))}
+                                    className="w-full border border-ice rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-teal/40"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate mb-1 uppercase tracking-wide">Classe</label>
+                                <select
+                                    value={filters.classeId || ""}
+                                    onChange={(e) => setFilters((prev) => ({ ...prev, classeId: e.target.value }))}
+                                    className="w-full border border-ice rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-teal/40"
+                                >
+                                    <option value="">Toutes les classes</option>
+                                    {classes.map((c) => (
+                                        <option key={c.id} value={c.id}>{c.name || c.id}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate mb-1 uppercase tracking-wide">Heure debut</label>
+                                <input
+                                    type="time"
+                                    value={filters.heureDebut?.slice(0, 5) || ""}
+                                    onChange={(e) => setFilters((prev) => ({ ...prev, heureDebut: e.target.value }))}
+                                    className="w-full border border-ice rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-teal/40"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-semibold text-slate mb-1 uppercase tracking-wide">Heure fin</label>
+                                <input
+                                    type="time"
+                                    value={filters.heureFin?.slice(0, 5) || ""}
+                                    onChange={(e) => setFilters((prev) => ({ ...prev, heureFin: e.target.value }))}
+                                    className="w-full border border-ice rounded-xl px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-teal/40"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 items-center justify-end mt-3">
+                            {hasActiveFilters && (
+                                <span className="text-xs text-teal font-semibold mr-auto">Filtres actifs</span>
+                            )}
+                            <button
+                                type="button"
+                                onClick={handleResetFilters}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate border border-ice hover:bg-ice/40"
+                            >
+                                Reinitialiser
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleApplyFilters}
+                                className="px-3 py-1.5 rounded-lg text-xs font-semibold text-white"
+                                style={{ background: "linear-gradient(135deg,#0E9E8E,#16BCA8)" }}
+                            >
+                                Filtrer
+                            </button>
+                        </div>
                     </div>
 
                     {loadingAbsences ? (

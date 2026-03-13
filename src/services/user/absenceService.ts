@@ -33,6 +33,13 @@ export interface AbsenceBulkPayload {
     motif?: string;
 }
 
+export interface AbsenceFilterParams {
+    date?: string;
+    classeId?: string;
+    heureDebut?: string;
+    heureFin?: string;
+}
+
 class AbsenceService {
     private getAuthHeaders() {
         const rawToken = localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -88,6 +95,28 @@ class AbsenceService {
             return this.normalizeList(response.data);
         } catch (error) {
             throw this.buildError("Echec de chargement des absences", error);
+        }
+    }
+
+    async filterAbsences(params: AbsenceFilterParams): Promise<Absence[]> {
+        try {
+            const queryParams = new URLSearchParams();
+
+            if (params.date) queryParams.set("date", params.date);
+            if (params.classeId) queryParams.set("classeId", params.classeId);
+            if (params.heureDebut) queryParams.set("heureDebut", params.heureDebut);
+            if (params.heureFin) queryParams.set("heureFin", params.heureFin);
+
+            const suffix = queryParams.toString();
+            const response = await axios.get(
+                `${BASE_URL}/api/absences/filter${suffix ? `?${suffix}` : ""}`,
+                {
+                    headers: this.getAuthHeaders(),
+                }
+            );
+            return this.normalizeList(response.data);
+        } catch (error) {
+            throw this.buildError("Echec de filtrage des absences", error);
         }
     }
 
