@@ -44,6 +44,23 @@ export interface NoteUpdatePayload {
     commentaire?: string;
 }
 
+export interface BilanMatiere {
+    matiereId: string;
+    nomMatiere: string;
+    coefficient: number;
+    moyenneDevoir: number | null;
+    moyenneExamen: number | null;
+    moyenneFinaleMatiere: number | null;
+}
+
+export interface NoteBilanMoyenne {
+    eleveId: string;
+    moyenneGenerale: number;
+    totalCoefficients: number;
+    nombreMatieres: number;
+    detailsParMatiere: BilanMatiere[];
+}
+
 class NoteService {
     private getAuthHeaders() {
         const rawToken = localStorage.getItem("token") || localStorage.getItem("accessToken");
@@ -115,6 +132,62 @@ class NoteService {
         }
 
         return this.normalizeNote(obj);
+    }
+
+    private normalizeBilanMoyenne(raw: unknown): NoteBilanMoyenne | null {
+        if (!raw || typeof raw !== "object" || Array.isArray(raw)) return null;
+        const obj = raw as Record<string, unknown>;
+
+        const eleveId = typeof obj.eleveId === "string" ? obj.eleveId : "";
+        if (!eleveId) return null;
+
+        const detailsRaw = Array.isArray(obj.detailsParMatiere) ? obj.detailsParMatiere : [];
+        const detailsParMatiere = detailsRaw
+            .map((item) => {
+                if (!item || typeof item !== "object" || Array.isArray(item)) return null;
+                const row = item as Record<string, unknown>;
+                return {
+                    matiereId: String(row.matiereId || ""),
+                    nomMatiere: String(row.nomMatiere || "-"),
+                    coefficient: Number(row.coefficient || 0),
+                    moyenneDevoir: row.moyenneDevoir == null ? null : Number(row.moyenneDevoir),
+                    moyenneExamen: row.moyenneExamen == null ? null : Number(row.moyenneExamen),
+                    moyenneFinaleMatiere: row.moyenneFinaleMatiere == null ? null : Number(row.moyenneFinaleMatiere),
+                } as BilanMatiere;
+            })
+            .filter((item): item is BilanMatiere => item !== null);
+
+        return {
+            eleveId,
+            moyenneGenerale: Number(obj.moyenneGenerale || 0),
+            totalCoefficients: Number(obj.totalCoefficients || 0),
+            nombreMatieres: Number(obj.nombreMatieres || 0),
+            detailsParMatiere,
+        };
+    }
+
+    private normalizeBilanList(raw: unknown): NoteBilanMoyenne[] {
+        if (Array.isArray(raw)) {
+            return raw
+                .map((item) => this.normalizeBilanMoyenne(item))
+                .filter((item): item is NoteBilanMoyenne => item !== null);
+        }
+
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+            const obj = raw as Record<string, unknown>;
+            for (const key of ["data", "content", "items", "result"]) {
+                if (Array.isArray(obj[key])) {
+                    return obj[key]
+                        .map((item) => this.normalizeBilanMoyenne(item))
+                        .filter((item): item is NoteBilanMoyenne => item !== null);
+                }
+            }
+
+            const single = this.normalizeBilanMoyenne(obj);
+            return single ? [single] : [];
+        }
+
+        return [];
     }
 
     private buildError(label: string, error: unknown): Error {
@@ -211,6 +284,29 @@ class NoteService {
             return note;
         } catch (error) {
             throw this.buildError("Echec de modification de la note", error);
+        }
+    }
+
+    async getBilansMoyenneByClasse(classeId: string): Promise<NoteBilanMoyenne[]> {
+        try {
+            const response = await axios.get(`${BASE_URL}/api/notes/classe/${classeId}/bilans-moyenne`, {
+                headers: this.getAuthHeaders(),
+            });
+            return this.normalizeBilanList(response.data);
+        } catch (error) {
+            throw this.buildError("Echec de chargement des bilans de la classe", error);
+        }
+    }
+
+    async getBilanMoyenneByEleve(eleveId: string): Promise<NoteBilanMoyenne | null> {
+        try {
+            const response = await axios.get(`${BASE_URL}/api/notes/eleve/${eleveId}/bilan-moyenne`, {
+                headers: this.getAuthHeaders(),
+            });
+            const bilans = this.normalizeBilanList(response.data);
+            return bilans[0] || null;
+        } catch (error) {
+            throw this.buildError("Echec de chargement du bilan de l'eleve", error);
         }
     }
 }

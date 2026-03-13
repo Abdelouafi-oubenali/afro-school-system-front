@@ -1,4 +1,6 @@
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import { useClasses } from "../../hooks/useClasses";
@@ -6,7 +8,13 @@ import { useEleves } from "../../hooks/useEleves";
 import { useEnseignents } from "../../hooks/useEnseignents";
 import { useMatieres } from "../../hooks/useMatieres";
 import noteService from "../../services/user/noteService";
-import type { Note, NoteCreatePayload, NoteType, NoteUpdatePayload } from "../../services/user/noteService";
+import type {
+    Note,
+    NoteBilanMoyenne,
+    NoteCreatePayload,
+    NoteType,
+    NoteUpdatePayload,
+} from "../../services/user/noteService";
 
 interface NoteSummaryRow {
     key: string;
@@ -28,6 +36,12 @@ export default function Notes() {
     const [notes, setNotes] = useState<Note[]>([]);
     const [loadingNotes, setLoadingNotes] = useState(false);
     const [notesError, setNotesError] = useState<string | null>(null);
+    const [bilans, setBilans] = useState<NoteBilanMoyenne[]>([]);
+    const [loadingBilans, setLoadingBilans] = useState(false);
+    const [bilansError, setBilansError] = useState<string | null>(null);
+    const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+    const [downloadingElevePdfId, setDownloadingElevePdfId] = useState<string | null>(null);
+    const [expandedBilanEleveId, setExpandedBilanEleveId] = useState<string | null>(null);
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +97,15 @@ export default function Notes() {
         () => new Set(notes.map((n) => n.eleveId).filter(Boolean)).size,
         [notes]
     );
+
+    const eleveNameById = useMemo(() => {
+        const map = new Map<string, string>();
+        for (const e of eleves) {
+            const fullName = `${e.prenom || ""} ${e.nom || ""}`.trim();
+            map.set(e.id, fullName || e.id);
+        }
+        return map;
+    }, [eleves]);
 
     const summaryRows = useMemo<NoteSummaryRow[]>(() => {
         const groups = new Map<string, NoteSummaryRow>();
@@ -176,6 +199,21 @@ export default function Notes() {
         }
     };
 
+    const runBilanQuery = async (loader: () => Promise<NoteBilanMoyenne[]>) => {
+        setLoadingBilans(true);
+        setBilansError(null);
+        try {
+            const data = await loader();
+            setBilans(data);
+            setExpandedBilanEleveId(null);
+        } catch (error) {
+            setBilansError(error instanceof Error ? error.message : "Erreur lors du chargement des bilans");
+            setBilans([]);
+        } finally {
+            setLoadingBilans(false);
+        }
+    };
+
     const startEditNote = (note: Note) => {
         setEditError(null);
         setEditSuccess(null);
@@ -217,6 +255,123 @@ export default function Notes() {
             setEditError(error instanceof Error ? error.message : "Erreur lors de la modification");
         } finally {
             setIsUpdating(false);
+        }
+    };
+
+    const handleDownloadBilansPdf = async () => {
+        if (bilans.length === 0) {
+            setBilansError("Aucun bilan a exporter en PDF.");
+            return;
+        }
+
+        try {
+            setIsDownloadingPdf(true);
+            setBilansError(null);
+
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            const classeNom = classes.find((c) => c.id === queryClasseId)?.name || queryClasseId || "Toutes";
+            const generatedAt = new Date().toLocaleString("fr-FR");
+
+            doc.setFontSize(16);
+            doc.text("Bilan de moyenne", 14, 14);
+            doc.setFontSize(10);
+            doc.text(`Classe: ${classeNom}`, 14, 20);
+            doc.text(`Date: ${generatedAt}`, 14, 25);
+
+            autoTable(doc, {
+                startY: 30,
+                head: [["Eleve", "Moyenne generale", "Total coefficients", "Nombre matieres"]],
+                body: bilans.map((bilan) => [
+                    eleveNameById.get(bilan.eleveId) || bilan.eleveId,
+                    Number(bilan.moyenneGenerale || 0).toFixed(2),
+                    Number(bilan.totalCoefficients || 0).toFixed(2),
+                    String(bilan.nombreMatieres || 0),
+                ]),
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [14, 158, 142] },
+            });
+
+            for (const bilan of bilans) {
+                doc.addPage();
+                const eleveNom = eleveNameById.get(bilan.eleveId) || bilan.eleveId;
+                doc.setFontSize(13);
+                doc.text(`Detail matieres - ${eleveNom}`, 14, 14);
+                doc.setFontSize(10);
+                doc.text(`Moyenne generale: ${Number(bilan.moyenneGenerale || 0).toFixed(2)}`, 14, 20);
+
+                autoTable(doc, {
+                    startY: 26,
+                    head: [["Matiere", "Coefficient", "Moyenne devoir", "Moyenne examen", "Moyenne finale"]],
+                    body: bilan.detailsParMatiere.map((detail) => [
+                        detail.nomMatiere || detail.matiereId,
+                        Number(detail.coefficient || 0).toFixed(2),
+                        detail.moyenneDevoir == null ? "-" : Number(detail.moyenneDevoir).toFixed(2),
+                        detail.moyenneExamen == null ? "-" : Number(detail.moyenneExamen).toFixed(2),
+                        detail.moyenneFinaleMatiere == null ? "-" : Number(detail.moyenneFinaleMatiere).toFixed(2),
+                    ]),
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [232, 160, 32] },
+                });
+            }
+
+            const safeClasse = (classeNom || "classe").replace(/[^a-zA-Z0-9-_]/g, "_");
+            doc.save(`bilans_moyenne_${safeClasse}.pdf`);
+        } catch (error) {
+            setBilansError(error instanceof Error ? error.message : "Erreur lors de la generation du PDF");
+        } finally {
+            setIsDownloadingPdf(false);
+        }
+    };
+
+    const handleDownloadEleveBilanPdf = async (bilan: NoteBilanMoyenne) => {
+        try {
+            setDownloadingElevePdfId(bilan.eleveId);
+            setBilansError(null);
+
+            const eleveNom = eleveNameById.get(bilan.eleveId) || bilan.eleveId;
+            const classeNom = classes.find((c) => c.id === queryClasseId)?.name || queryClasseId || "N/A";
+            const generatedAt = new Date().toLocaleString("fr-FR");
+
+            const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+            doc.setFontSize(16);
+            doc.text("Bilan de moyenne eleve", 14, 14);
+            doc.setFontSize(10);
+            doc.text(`Eleve: ${eleveNom}`, 14, 20);
+            doc.text(`Classe: ${classeNom}`, 14, 25);
+            doc.text(`Date: ${generatedAt}`, 14, 30);
+
+            autoTable(doc, {
+                startY: 36,
+                head: [["Moyenne generale", "Total coefficients", "Nombre matieres"]],
+                body: [[
+                    Number(bilan.moyenneGenerale || 0).toFixed(2),
+                    Number(bilan.totalCoefficients || 0).toFixed(2),
+                    String(bilan.nombreMatieres || 0),
+                ]],
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [14, 158, 142] },
+            });
+
+            autoTable(doc, {
+                startY: 58,
+                head: [["Matiere", "Coefficient", "Moyenne devoir", "Moyenne examen", "Moyenne finale"]],
+                body: bilan.detailsParMatiere.map((detail) => [
+                    detail.nomMatiere || detail.matiereId,
+                    Number(detail.coefficient || 0).toFixed(2),
+                    detail.moyenneDevoir == null ? "-" : Number(detail.moyenneDevoir).toFixed(2),
+                    detail.moyenneExamen == null ? "-" : Number(detail.moyenneExamen).toFixed(2),
+                    detail.moyenneFinaleMatiere == null ? "-" : Number(detail.moyenneFinaleMatiere).toFixed(2),
+                ]),
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [232, 160, 32] },
+            });
+
+            const safeEleve = eleveNom.replace(/[^a-zA-Z0-9-_]/g, "_");
+            doc.save(`bilan_eleve_${safeEleve}.pdf`);
+        } catch (error) {
+            setBilansError(error instanceof Error ? error.message : "Erreur lors de la generation du PDF eleve");
+        } finally {
+            setDownloadingElevePdfId(null);
         }
     };
 
@@ -492,6 +647,35 @@ export default function Notes() {
                         >
                             Charger tout
                         </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!queryClasseId) {
+                                    setBilansError("Selectionnez une classe pour charger le bilan de moyenne.");
+                                    return;
+                                }
+                                void runBilanQuery(() => noteService.getBilansMoyenneByClasse(queryClasseId));
+                            }}
+                            className="px-4 py-2 rounded-xl border border-gold/40 text-gold text-sm font-semibold hover:bg-gold/5 transition-colors"
+                        >
+                            Bilan moyenne classe
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                if (!queryEleveId) {
+                                    setBilansError("Selectionnez un eleve pour charger son bilan de moyenne.");
+                                    return;
+                                }
+                                void runBilanQuery(async () => {
+                                    const bilan = await noteService.getBilanMoyenneByEleve(queryEleveId);
+                                    return bilan ? [bilan] : [];
+                                });
+                            }}
+                            className="px-4 py-2 rounded-xl border border-gold/40 text-gold text-sm font-semibold hover:bg-gold/5 transition-colors"
+                        >
+                            Bilan moyenne eleve
+                        </button>
                     </div>
 
                     {notesError && (
@@ -543,6 +727,117 @@ export default function Notes() {
                                             </td>
                                         </tr>
                                     ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+
+                <div className="bg-white rounded-2xl p-6 shadow-card animate-fadeUp border border-navy/10">
+                    <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
+                        <h3 className="font-semibold text-navy text-base">Bilans de moyenne</h3>
+                        <button
+                            type="button"
+                            onClick={() => { void handleDownloadBilansPdf(); }}
+                            disabled={isDownloadingPdf || bilans.length === 0}
+                            className="px-4 py-2 rounded-xl border border-teal/30 text-teal text-sm font-semibold hover:bg-teal/5 transition-colors disabled:opacity-60"
+                        >
+                            {isDownloadingPdf ? "Generation PDF..." : "Telecharger PDF"}
+                        </button>
+                    </div>
+                    <p className="text-[12px] text-slate mb-4">
+                        Chargez les bilans avec les boutons "Bilan moyenne classe" ou "Bilan moyenne eleve".
+                    </p>
+
+                    {bilansError && (
+                        <div className="p-3 rounded-xl bg-coral/10 border border-coral/20 text-coral text-sm mb-4">{bilansError}</div>
+                    )}
+
+                    {loadingBilans ? (
+                        <div className="text-sm text-slate">Chargement des bilans...</div>
+                    ) : bilans.length === 0 ? (
+                        <div className="text-sm text-slate">Aucun bilan charge.</div>
+                    ) : (
+                        <div className="overflow-x-auto rounded-xl border border-navy/10">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="bg-ice/70 text-slate text-[11px] uppercase tracking-wide">
+                                        <th className="px-3 py-2 text-left">Eleve</th>
+                                        <th className="px-3 py-2 text-left">Moyenne generale</th>
+                                        <th className="px-3 py-2 text-left">Total coefficients</th>
+                                        <th className="px-3 py-2 text-left">Nombre matieres</th>
+                                        <th className="px-3 py-2 text-left">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-navy/10">
+                                    {bilans.map((bilan) => {
+                                        const eleveNom = eleveNameById.get(bilan.eleveId) || bilan.eleveId;
+                                        const isExpanded = expandedBilanEleveId === bilan.eleveId;
+
+                                        return (
+                                            <Fragment key={bilan.eleveId}>
+                                                <tr className="hover:bg-ice/50 transition-colors">
+                                                    <td className="px-3 py-2 text-navy">{eleveNom}</td>
+                                                    <td className="px-3 py-2 text-navy font-semibold">{Number(bilan.moyenneGenerale || 0).toFixed(2)}</td>
+                                                    <td className="px-3 py-2 text-navy">{Number(bilan.totalCoefficients || 0).toFixed(2)}</td>
+                                                    <td className="px-3 py-2 text-navy">{bilan.nombreMatieres}</td>
+                                                    <td className="px-3 py-2">
+                                                        <div className="flex flex-wrap gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setExpandedBilanEleveId((prev) => (prev === bilan.eleveId ? null : bilan.eleveId))}
+                                                                className="px-3 py-1.5 rounded-lg border border-teal/30 text-teal text-xs font-semibold hover:bg-teal/5 transition-colors"
+                                                            >
+                                                                {isExpanded ? "Masquer" : "Voir"}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => { void handleDownloadEleveBilanPdf(bilan); }}
+                                                                disabled={downloadingElevePdfId === bilan.eleveId}
+                                                                className="px-3 py-1.5 rounded-lg border border-gold/40 text-gold text-xs font-semibold hover:bg-gold/5 transition-colors disabled:opacity-60"
+                                                            >
+                                                                {downloadingElevePdfId === bilan.eleveId ? "PDF..." : "PDF eleve"}
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                                {isExpanded && (
+                                                    <tr>
+                                                        <td colSpan={5} className="px-3 py-3 bg-ice/30">
+                                                            {bilan.detailsParMatiere.length === 0 ? (
+                                                                <div className="text-xs text-slate">Aucun detail matiere.</div>
+                                                            ) : (
+                                                                <div className="overflow-x-auto rounded-lg border border-navy/10 bg-white">
+                                                                    <table className="w-full text-xs">
+                                                                        <thead>
+                                                                            <tr className="bg-ice/60 text-slate uppercase tracking-wide">
+                                                                                <th className="px-2 py-2 text-left">Matiere</th>
+                                                                                <th className="px-2 py-2 text-left">Coefficient</th>
+                                                                                <th className="px-2 py-2 text-left">Moyenne devoir</th>
+                                                                                <th className="px-2 py-2 text-left">Moyenne examen</th>
+                                                                                <th className="px-2 py-2 text-left">Moyenne finale</th>
+                                                                            </tr>
+                                                                        </thead>
+                                                                        <tbody className="divide-y divide-navy/10">
+                                                                            {bilan.detailsParMatiere.map((detail) => (
+                                                                                <tr key={`${bilan.eleveId}-${detail.matiereId}`}>
+                                                                                    <td className="px-2 py-2 text-navy">{detail.nomMatiere || detail.matiereId}</td>
+                                                                                    <td className="px-2 py-2 text-navy">{Number(detail.coefficient || 0).toFixed(2)}</td>
+                                                                                    <td className="px-2 py-2 text-navy">{detail.moyenneDevoir == null ? "-" : Number(detail.moyenneDevoir).toFixed(2)}</td>
+                                                                                    <td className="px-2 py-2 text-navy">{detail.moyenneExamen == null ? "-" : Number(detail.moyenneExamen).toFixed(2)}</td>
+                                                                                    <td className="px-2 py-2 text-navy font-semibold">{detail.moyenneFinaleMatiere == null ? "-" : Number(detail.moyenneFinaleMatiere).toFixed(2)}</td>
+                                                                                </tr>
+                                                                            ))}
+                                                                        </tbody>
+                                                                    </table>
+                                                                </div>
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
