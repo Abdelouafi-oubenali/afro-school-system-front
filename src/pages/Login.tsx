@@ -8,16 +8,30 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
+  const isTeacherRole = (role?: string) => {
+    const normalized = (role || "").toLowerCase();
+    return normalized.includes("enseign");
+  };
+
   useEffect(() => {
     if (user) {
-      console.log("✅ Redirection vers /dashboard, user:", user);
-      navigate("/dashboard");
+      const destination = isTeacherRole(user.role) ? "/enseignant" : "/dashboard";
+      console.log("✅ Redirection post-login:", destination, user);
+      navigate(destination);
     }
   }, [user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email, password);
+    if (loading) return;
+
+    const normalizedEmail = email.trim().toLowerCase();
+    console.log("[Login] submit", {
+      rawEmail: email,
+      normalizedEmail,
+      passwordLength: password.length,
+    });
+    await login(normalizedEmail, password);
   };
 
   return (

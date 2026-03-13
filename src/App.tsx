@@ -10,18 +10,26 @@ import Matieres from './pages/admin/Matieres.tsx';
 import Seances from './pages/admin/Seances.tsx';
 import Absences from './pages/admin/Absences.tsx';
 import Notes from './pages/admin/Notes.tsx';
+import EnseignantDashboard from './pages/enseignant/Dashboard';
 import { useAuth } from './context/AuthContext';
 import './App.css';
 
+const isTeacherRole = (role?: string) => {
+  const normalized = (role || '').toLowerCase();
+  return normalized.includes('enseign');
+};
+
 function App() {
   const { user } = useAuth();
+  const teacherHome = '/enseignant';
+  const defaultHome = user && isTeacherRole(user.role) ? teacherHome : '/dashboard';
 
   return (
     <Router>
       <Routes>
         <Route 
           path="/login" 
-          element={user ? <Navigate to="/dashboard" replace /> : <Login />} 
+          element={user ? <Navigate to={defaultHome} replace /> : <Login />} 
         />
         <Route 
           path="/dashboard" 
@@ -63,9 +71,17 @@ function App() {
           path="/notes"
           element={user ? <Notes /> : <Navigate to="/login" replace />}
         />
+        <Route
+          path="/enseignant"
+          element={
+            user
+              ? (isTeacherRole(user.role) ? <EnseignantDashboard /> : <Navigate to="/dashboard" replace />)
+              : <Navigate to="/login" replace />
+          }
+        />
         <Route 
           path="/" 
-          element={<Navigate to={user ? "/dashboard" : "/login"} replace />} 
+          element={<Navigate to={user ? defaultHome : "/login"} replace />} 
         />
       </Routes>
     </Router>
