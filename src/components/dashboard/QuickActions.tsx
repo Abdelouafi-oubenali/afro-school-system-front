@@ -37,14 +37,16 @@ export function QuickActions() {
                 </div>
                 Gérer classes
             </Link>
-            <button className="bg-white border border-navy/8 rounded-xl p-4 flex items-center gap-3 text-[13px] font-medium text-navy hover:border-navy/30 hover:bg-navy/5 hover:-translate-y-0.5 shadow-card transition-all duration-200">
-                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate/10 flex-shrink-0">
-                    <svg className="w-[18px] h-[18px] text-slate" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M22 17H2a3 3 0 003-3V9a7 7 0 0114 0v5a3 3 0 003 3zm-8.27 4a2 2 0 01-3.46 0" />
+            <Link to="/chat" className="bg-white border border-navy/8 rounded-xl p-4 flex items-center gap-3 text-[13px] font-medium text-navy hover:border-indigo-500/40 hover:bg-indigo-50 hover:-translate-y-0.5 shadow-card transition-all duration-200">
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-indigo-100 flex-shrink-0">
+                    <svg className="w-[18px] h-[18px] text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M8 10h8" />
+                        <path d="M8 14h5" />
+                        <path d="M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.149-3.446A7.42 7.42 0 013 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                     </svg>
                 </div>
-                Envoyer annonce
-            </button>
+                Messagerie
+            </Link>
         </div>
     );
 }

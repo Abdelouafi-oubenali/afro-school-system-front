@@ -11,6 +11,7 @@ import Seances from './pages/admin/Seances.tsx';
 import Absences from './pages/admin/Absences.tsx';
 import Notes from './pages/admin/Notes.tsx';
 import EnseignantDashboard from './pages/enseignant/Dashboard';
+import ChatPage from './pages/shared/Chat';
 import { useAuth } from './context/AuthContext';
 import './App.css';
 
@@ -70,6 +71,10 @@ function App() {
         <Route
           path="/notes"
           element={user ? <Notes /> : <Navigate to="/login" replace />}
+        />
+        <Route
+          path="/chat"
+          element={user ? <ChatPage /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/enseignant"

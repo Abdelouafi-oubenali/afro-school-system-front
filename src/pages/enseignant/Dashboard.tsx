@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useAuth } from "../../context/AuthContext";
@@ -556,6 +556,12 @@ export default function EnseignantDashboard() {
                                         </svg>
                                         {isDownloadingEmploi ? "Génération PDF..." : "Exporter PDF"}
                                     </button>
+                                    <Link
+                                        to="/chat"
+                                        className="px-4 py-2 rounded-xl text-sm font-semibold transition-colors border border-navy/15 text-navy hover:bg-ice"
+                                    >
+                                        Messagerie
+                                    </Link>
                                 </div>
                             </div>
 

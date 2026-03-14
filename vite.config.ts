@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    global: "globalThis",
+  },
   plugins: [react() , tailwindcss()],
   server: {
     proxy: {
@@ -18,6 +21,12 @@ export default defineConfig({
       "/note-service": {
         target: "http://localhost:8080",
         changeOrigin: true,
+      },
+      "/message-notification-service": {
+        target: "http://localhost:8085",
+        changeOrigin: true,
+        ws: true,
+        rewrite: (path) => path.replace(/^\/message-notification-service/, ""),
       },
 
     },
