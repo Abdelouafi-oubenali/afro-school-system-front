@@ -131,6 +131,43 @@ class ClassService {
         }
     }
 
+    async getClassesByEnseignant(enseignantId: string): Promise<ClassRoom[]> {
+        try {
+            const response = await axios.get(`${API_URL}/enseignant/${enseignantId}`, {
+                headers: this.getAuthHeaders(),
+            });
+            return this.normalizeClassesResponse(response.data);
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                const status = error.response?.status;
+                const method = error.config?.method?.toUpperCase() || "GET";
+                const url = error.config?.url || `${API_URL}/enseignant/${enseignantId}`;
+                const data = error.response?.data as
+                    | { message?: string; error?: string; details?: string }
+                    | string
+                    | undefined;
+
+                const backendMessage =
+                    typeof data === "string"
+                        ? data
+                        : data?.message || data?.error || data?.details;
+
+                throw new Error(
+                    [
+                        "Echec de chargement des classes de l'enseignant",
+                        `HTTP: ${status ?? "inconnu"}`,
+                        `Route: ${method} ${url}`,
+                        backendMessage ? `Backend: ${backendMessage}` : null,
+                    ]
+                        .filter(Boolean)
+                        .join(" | ")
+                );
+            }
+
+            throw new Error("Echec de chargement des classes de l'enseignant: erreur inattendue");
+        }
+    }
+
     async createClass(payload: ClassCreatePayload): Promise<ClassRoom> {
         try {
             const response = await axios.post(API_URL, payload, {

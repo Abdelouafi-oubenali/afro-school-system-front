@@ -6,6 +6,9 @@ import { useAuth } from "../../context/AuthContext";
 import { useSeances, useEmploiByEnseignant } from "../../hooks/useSeances";
 import { useEleves } from "../../hooks/useEleves";
 import absenceService, { type AbsenceType } from "../../services/user/absenceService";
+import classService from "../../services/user/classService";
+import type { ClassRoom } from "../../services/user/classService";
+import noteService, { type Note, type NoteType } from "../../services/user/noteService";
 import type { Seance, JourSemaine } from "../../services/user/seanceService";
 
 const DAY_LABELS: Record<JourSemaine, string> = {
@@ -86,8 +89,11 @@ export default function EnseignantDashboard() {
     const { user, logout } = useAuth();
     const teacherId = user?.id || null;
     const teacherUuid = isUuid(teacherId) ? teacherId : null;
-    const [activeView, setActiveView] = useState<"emploi" | "absences">("emploi");
+    const [activeView, setActiveView] = useState<"emploi" | "classes" | "notes" | "absences">("emploi");
     const [isDownloadingEmploi, setIsDownloadingEmploi] = useState(false);
+    const [teacherClasses, setTeacherClasses] = useState<ClassRoom[]>([]);
+    const [loadingClasses, setLoadingClasses] = useState(false);
+    const [classesError, setClassesError] = useState<string | null>(null);
 
     useEffect(() => {
         console.log("[EnseignantDashboard] debug teacher id", {
@@ -102,6 +108,30 @@ export default function EnseignantDashboard() {
     const { emploi, loading: loadingEmploi, error: emploiError } = useEmploiByEnseignant(teacherUuid);
     const { eleves, loading: loadingEleves } = useEleves();
 
+    useEffect(() => {
+        const loadTeacherClasses = async () => {
+            if (!teacherUuid) {
+                setTeacherClasses([]);
+                setClassesError(null);
+                return;
+            }
+
+            try {
+                setLoadingClasses(true);
+                setClassesError(null);
+                const data = await classService.getClassesByEnseignant(teacherUuid);
+                setTeacherClasses(Array.isArray(data) ? data : []);
+            } catch (error) {
+                setClassesError(error instanceof Error ? error.message : "Erreur de chargement des classes");
+                setTeacherClasses([]);
+            } finally {
+                setLoadingClasses(false);
+            }
+        };
+
+        void loadTeacherClasses();
+    }, [teacherUuid]);
+
     const [selectedSeanceId, setSelectedSeanceId] = useState("");
     const [selectedEleveIds, setSelectedEleveIds] = useState<string[]>([]);
     const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
@@ -110,6 +140,24 @@ export default function EnseignantDashboard() {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [selectedNoteSeanceId, setSelectedNoteSeanceId] = useState("");
+    const [selectedNoteEleveId, setSelectedNoteEleveId] = useState("");
+    const [noteValue, setNoteValue] = useState("");
+    const [noteType, setNoteType] = useState<NoteType>("EXAMEN");
+    const [noteNumeroExamen, setNoteNumeroExamen] = useState("1");
+    const [noteCommentaire, setNoteCommentaire] = useState("");
+    const [notesList, setNotesList] = useState<Note[]>([]);
+    const [loadingNotes, setLoadingNotes] = useState(false);
+    const [notesError, setNotesError] = useState<string | null>(null);
+    const [notesSubmitError, setNotesSubmitError] = useState<string | null>(null);
+    const [notesSubmitSuccess, setNotesSubmitSuccess] = useState<string | null>(null);
+    const [isSavingNote, setIsSavingNote] = useState(false);
+    const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+    const [editNoteType, setEditNoteType] = useState<NoteType>("EXAMEN");
+    const [editNoteNumeroExamen, setEditNoteNumeroExamen] = useState("1");
+    const [editNoteValeur, setEditNoteValeur] = useState("");
+    const [editNoteCommentaire, setEditNoteCommentaire] = useState("");
+    const [isUpdatingNote, setIsUpdatingNote] = useState(false);
 
     const teacherSeances = useMemo(
         () => seances
@@ -128,6 +176,11 @@ export default function EnseignantDashboard() {
         [teacherSeances, selectedSeanceId]
     );
 
+    const selectedNoteSeance = useMemo<Seance | null>(
+        () => teacherSeances.find((s) => s.id === selectedNoteSeanceId) || null,
+        [teacherSeances, selectedNoteSeanceId]
+    );
+
     const classeEleves = useMemo(() => {
         if (!selectedSeance?.classeId) return [];
         return eleves.filter((eleve) => {
@@ -136,6 +189,15 @@ export default function EnseignantDashboard() {
             return Boolean(byClasseId || byClasse);
         });
     }, [eleves, selectedSeance]);
+
+    const noteClasseEleves = useMemo(() => {
+        if (!selectedNoteSeance?.classeId) return [];
+        return eleves.filter((eleve) => {
+            const byClasseId = eleve.classeId && eleve.classeId === selectedNoteSeance.classeId;
+            const byClasse = eleve.classe && eleve.classe === selectedNoteSeance.classeId;
+            return Boolean(byClasseId || byClasse);
+        });
+    }, [eleves, selectedNoteSeance]);
 
     const emploiByDay = useMemo(() => {
         const map = new Map<JourSemaine, typeof emploi>();
@@ -187,6 +249,34 @@ export default function EnseignantDashboard() {
         };
     }, [emploi]);
 
+    useEffect(() => {
+        const loadClassNotes = async () => {
+            if (!teacherUuid || !selectedNoteSeance?.classeId) {
+                setNotesList([]);
+                setNotesError(null);
+                return;
+            }
+
+            try {
+                setLoadingNotes(true);
+                setNotesError(null);
+                const data = await noteService.getNotesByClasse(selectedNoteSeance.classeId);
+                const filtered = data.filter((note) =>
+                    note.enseignantId === teacherUuid &&
+                    note.matiereId === selectedNoteSeance.matiereId
+                );
+                setNotesList(filtered);
+            } catch (error) {
+                setNotesError(error instanceof Error ? error.message : "Erreur de chargement des notes");
+                setNotesList([]);
+            } finally {
+                setLoadingNotes(false);
+            }
+        };
+
+        void loadClassNotes();
+    }, [teacherUuid, selectedNoteSeance]);
+
     const handleDownloadEmploiPdf = async () => {
         if (emploiFlat.length === 0) return;
 
@@ -215,6 +305,132 @@ export default function EnseignantDashboard() {
             doc.save(`emploi-enseignant-${(user?.name || "export").replace(/\s+/g, "-").toLowerCase()}.pdf`);
         } finally {
             setIsDownloadingEmploi(false);
+        }
+    };
+
+    const handleNoteSeanceChange = (id: string) => {
+        setSelectedNoteSeanceId(id);
+        setSelectedNoteEleveId("");
+        setNotesSubmitError(null);
+        setNotesSubmitSuccess(null);
+    };
+
+    const handleCreateNote = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setNotesSubmitError(null);
+        setNotesSubmitSuccess(null);
+
+        if (!teacherUuid) {
+            setNotesSubmitError("Identifiant enseignant invalide. Reconnectez-vous.");
+            return;
+        }
+
+        if (!selectedNoteSeance) {
+            setNotesSubmitError("Choisissez une séance.");
+            return;
+        }
+
+        if (!selectedNoteEleveId) {
+            setNotesSubmitError("Choisissez un élève.");
+            return;
+        }
+
+        const valeur = Number(noteValue);
+        const numeroExamen = Number(noteNumeroExamen);
+
+        if (Number.isNaN(valeur) || valeur < 0 || valeur > 20) {
+            setNotesSubmitError("La note doit être comprise entre 0 et 20.");
+            return;
+        }
+
+        if (Number.isNaN(numeroExamen) || numeroExamen < 1) {
+            setNotesSubmitError("Le numéro d'examen doit être supérieur ou égal à 1.");
+            return;
+        }
+
+        try {
+            setIsSavingNote(true);
+            const created = await noteService.createNote({
+                eleveId: selectedNoteEleveId,
+                matiereId: selectedNoteSeance.matiereId,
+                enseignantId: teacherUuid,
+                classeId: selectedNoteSeance.classeId,
+                numeroExamen,
+                valeur,
+                type_note: noteType,
+                commentaire: noteCommentaire.trim() || undefined,
+            });
+
+            setNotesList((prev) => [created, ...prev]);
+            setNotesSubmitSuccess("Note enregistrée avec succès.");
+            setSelectedNoteEleveId("");
+            setNoteValue("");
+            setNoteCommentaire("");
+            setNoteNumeroExamen("1");
+            setNoteType("EXAMEN");
+        } catch (error) {
+            setNotesSubmitError(error instanceof Error ? error.message : "Erreur lors de l'enregistrement de la note");
+        } finally {
+            setIsSavingNote(false);
+        }
+    };
+
+    const startEditNote = (note: Note) => {
+        setEditingNoteId(note.id);
+        setEditNoteType((note.type_note || note.typeNote || "EXAMEN") as NoteType);
+        setEditNoteNumeroExamen(String(note.numeroExamen || 1));
+        setEditNoteValeur(String(note.valeur ?? ""));
+        setEditNoteCommentaire(note.commentaire || "");
+        setNotesSubmitError(null);
+        setNotesSubmitSuccess(null);
+    };
+
+    const cancelEditNote = () => {
+        setEditingNoteId(null);
+    };
+
+    const saveEditNote = async (note: Note) => {
+        if (!teacherUuid) {
+            setNotesSubmitError("Identifiant enseignant invalide. Reconnectez-vous.");
+            return;
+        }
+
+        const valeur = Number(editNoteValeur);
+        const numeroExamen = Number(editNoteNumeroExamen);
+
+        if (Number.isNaN(valeur) || valeur < 0 || valeur > 20) {
+            setNotesSubmitError("La note doit être comprise entre 0 et 20.");
+            return;
+        }
+
+        if (Number.isNaN(numeroExamen) || numeroExamen < 1) {
+            setNotesSubmitError("Le numéro d'examen doit être supérieur ou égal à 1.");
+            return;
+        }
+
+        try {
+            setIsUpdatingNote(true);
+            setNotesSubmitError(null);
+            setNotesSubmitSuccess(null);
+
+            const updated = await noteService.updateNote(note.id, {
+                eleveId: note.eleveId,
+                matiereId: note.matiereId,
+                enseignantId: teacherUuid,
+                classeId: note.classeId,
+                numeroExamen,
+                valeur,
+                type_note: editNoteType,
+                commentaire: editNoteCommentaire.trim() || undefined,
+            });
+
+            setNotesList((prev) => prev.map((item) => (item.id === note.id ? { ...item, ...updated } : item)));
+            setEditingNoteId(null);
+            setNotesSubmitSuccess("Note mise à jour avec succès.");
+        } catch (error) {
+            setNotesSubmitError(error instanceof Error ? error.message : "Erreur lors de la mise à jour de la note");
+        } finally {
+            setIsUpdatingNote(false);
         }
     };
 
@@ -332,6 +548,28 @@ export default function EnseignantDashboard() {
                             >
                                 Voir absences
                             </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveView("classes")}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                                    activeView === "classes"
+                                        ? "nav-active text-white shadow-teal"
+                                        : "border border-navy/15 text-navy hover:bg-ice"
+                                }`}
+                            >
+                                Mes classes
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveView("notes")}
+                                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                                    activeView === "notes"
+                                        ? "nav-active text-white shadow-teal"
+                                        : "border border-navy/15 text-navy hover:bg-ice"
+                                }`}
+                            >
+                                Mes notes
+                            </button>
                         </div>
                     </div>
                     <button
@@ -433,6 +671,308 @@ export default function EnseignantDashboard() {
                                     ))}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+                </section>
+                )}
+
+                {activeView === "notes" && (
+                <section className="bg-white rounded-2xl shadow-card border border-navy/10 p-5 md:p-6 animate-fadeUp space-y-5">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <h2 className="text-lg font-semibold text-navy">Ajouter des notes à mes classes</h2>
+                        {loadingNotes && <span className="text-sm text-slate">Chargement...</span>}
+                    </div>
+
+                    <form onSubmit={handleCreateNote} className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                            <div>
+                                <label className="block text-[12px] font-semibold text-slate mb-1">Séance</label>
+                                <select
+                                    value={selectedNoteSeanceId}
+                                    onChange={(e) => handleNoteSeanceChange(e.target.value)}
+                                    className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+                                >
+                                    <option value="">Choisir une séance</option>
+                                    {teacherSeances.map((seance) => (
+                                        <option key={seance.id} value={seance.id}>
+                                            {DAY_LABELS[seance.jour]} {normalizeTime(seance.heureDebut)}-{normalizeTime(seance.heureFin)} | {seance.classeNom || seance.classeId} | {seance.matiereNom || seance.matiereId}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-[12px] font-semibold text-slate mb-1">Élève</label>
+                                <select
+                                    value={selectedNoteEleveId}
+                                    onChange={(e) => setSelectedNoteEleveId(e.target.value)}
+                                    className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+                                >
+                                    <option value="">Choisir un élève</option>
+                                    {noteClasseEleves.map((eleve) => (
+                                        <option key={eleve.id} value={eleve.id}>{eleve.prenom} {eleve.nom}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-[12px] font-semibold text-slate mb-1">Type</label>
+                                <select
+                                    value={noteType}
+                                    onChange={(e) => setNoteType(e.target.value as NoteType)}
+                                    className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+                                >
+                                    <option value="DEVOIR">DEVOIR</option>
+                                    <option value="EXAMEN">EXAMEN</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label className="block text-[12px] font-semibold text-slate mb-1">Numéro d'examen</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={noteNumeroExamen}
+                                    onChange={(e) => setNoteNumeroExamen(e.target.value)}
+                                    className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-[12px] font-semibold text-slate mb-1">Note /20</label>
+                                <input
+                                    type="number"
+                                    min="0"
+                                    max="20"
+                                    step="0.25"
+                                    value={noteValue}
+                                    onChange={(e) => setNoteValue(e.target.value)}
+                                    className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+                                    placeholder="Ex: 15.5"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[12px] font-semibold text-slate mb-1">Commentaire</label>
+                                <input
+                                    type="text"
+                                    value={noteCommentaire}
+                                    onChange={(e) => setNoteCommentaire(e.target.value)}
+                                    className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
+                                    placeholder="Optionnel"
+                                />
+                            </div>
+                        </div>
+
+                        {selectedNoteSeance && (
+                            <div className="rounded-xl border border-navy/10 bg-ice/40 p-3 text-sm text-navy grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-wide text-slate">Classe</p>
+                                    <p className="font-medium">{selectedNoteSeance.classeNom || selectedNoteSeance.classeId}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-wide text-slate">Matière</p>
+                                    <p className="font-medium">{selectedNoteSeance.matiereNom || selectedNoteSeance.matiereId}</p>
+                                </div>
+                                <div>
+                                    <p className="text-[11px] uppercase tracking-wide text-slate">Horaire</p>
+                                    <p className="font-medium">{DAY_LABELS[selectedNoteSeance.jour]} {normalizeTime(selectedNoteSeance.heureDebut)} - {normalizeTime(selectedNoteSeance.heureFin)}</p>
+                                </div>
+                            </div>
+                        )}
+
+                        {notesSubmitError && <div className="rounded-xl border border-coral/20 bg-coral/10 text-coral text-sm px-3 py-2">{notesSubmitError}</div>}
+                        {notesSubmitSuccess && <div className="rounded-xl border border-teal/20 bg-teal/10 text-teal text-sm px-3 py-2">{notesSubmitSuccess}</div>}
+
+                        <div className="flex justify-end">
+                            <button
+                                type="submit"
+                                disabled={isSavingNote}
+                                className="nav-active text-white text-sm font-semibold px-5 py-2.5 rounded-xl shadow-teal hover:opacity-95 transition-opacity disabled:opacity-70"
+                            >
+                                {isSavingNote ? "Enregistrement..." : "Enregistrer la note"}
+                            </button>
+                        </div>
+                    </form>
+
+                    <div>
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                            <h3 className="text-base font-semibold text-navy">Notes récentes de cette séance</h3>
+                        </div>
+
+                        {notesError && <div className="rounded-xl border border-coral/20 bg-coral/10 text-coral text-sm px-3 py-2 mb-3">{notesError}</div>}
+
+                        {!selectedNoteSeance ? (
+                            <p className="text-sm text-slate">Choisissez une séance pour afficher les notes.</p>
+                        ) : notesList.length === 0 ? (
+                            <p className="text-sm text-slate">Aucune note enregistrée pour cette classe et cette matière.</p>
+                        ) : (
+                            <div className="overflow-x-auto rounded-xl border border-navy/10">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-ice/70 text-slate text-[11px] uppercase tracking-wide">
+                                            <th className="px-3 py-2 text-left">Élève</th>
+                                            <th className="px-3 py-2 text-left">Type</th>
+                                            <th className="px-3 py-2 text-left">Examen</th>
+                                            <th className="px-3 py-2 text-left">Valeur</th>
+                                            <th className="px-3 py-2 text-left">Commentaire</th>
+                                            <th className="px-3 py-2 text-left">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-navy/10">
+                                        {notesList.map((note) => (
+                                            <tr key={note.id} className="hover:bg-ice/40 transition-colors">
+                                                <td className="px-3 py-2 text-navy font-medium">{`${note.elevePrenom || ""} ${note.eleveNom || ""}`.trim() || note.eleveId}</td>
+                                                <td className="px-3 py-2 text-slate">
+                                                    {editingNoteId === note.id ? (
+                                                        <select
+                                                            value={editNoteType}
+                                                            onChange={(e) => setEditNoteType(e.target.value as NoteType)}
+                                                            className="rounded-lg border border-navy/10 bg-white px-2 py-1 text-xs text-navy outline-none focus:border-teal"
+                                                        >
+                                                            <option value="DEVOIR">DEVOIR</option>
+                                                            <option value="EXAMEN">EXAMEN</option>
+                                                        </select>
+                                                    ) : (note.type_note || note.typeNote || "-")}
+                                                </td>
+                                                <td className="px-3 py-2 text-slate">
+                                                    {editingNoteId === note.id ? (
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            value={editNoteNumeroExamen}
+                                                            onChange={(e) => setEditNoteNumeroExamen(e.target.value)}
+                                                            className="w-20 rounded-lg border border-navy/10 bg-white px-2 py-1 text-xs text-navy outline-none focus:border-teal"
+                                                        />
+                                                    ) : note.numeroExamen}
+                                                </td>
+                                                <td className="px-3 py-2 text-navy font-semibold">
+                                                    {editingNoteId === note.id ? (
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            max="20"
+                                                            step="0.25"
+                                                            value={editNoteValeur}
+                                                            onChange={(e) => setEditNoteValeur(e.target.value)}
+                                                            className="w-24 rounded-lg border border-navy/10 bg-white px-2 py-1 text-xs text-navy outline-none focus:border-teal"
+                                                        />
+                                                    ) : note.valeur}
+                                                </td>
+                                                <td className="px-3 py-2 text-slate">
+                                                    {editingNoteId === note.id ? (
+                                                        <input
+                                                            type="text"
+                                                            value={editNoteCommentaire}
+                                                            onChange={(e) => setEditNoteCommentaire(e.target.value)}
+                                                            className="w-full min-w-[140px] rounded-lg border border-navy/10 bg-white px-2 py-1 text-xs text-navy outline-none focus:border-teal"
+                                                            placeholder="Optionnel"
+                                                        />
+                                                    ) : (note.commentaire || "-")}
+                                                </td>
+                                                <td className="px-3 py-2">
+                                                    {editingNoteId === note.id ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => saveEditNote(note)}
+                                                                disabled={isUpdatingNote}
+                                                                className="px-2.5 py-1 rounded-lg bg-teal text-white text-xs font-semibold disabled:opacity-60"
+                                                            >
+                                                                {isUpdatingNote ? "..." : "Enregistrer"}
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={cancelEditNote}
+                                                                className="px-2.5 py-1 rounded-lg border border-navy/15 text-navy text-xs font-semibold"
+                                                            >
+                                                                Annuler
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => startEditNote(note)}
+                                                            className="px-2.5 py-1 rounded-lg border border-teal/20 bg-teal/10 text-teal text-xs font-semibold"
+                                                        >
+                                                            Modifier
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+                    </div>
+                </section>
+                )}
+
+                {activeView === "classes" && (
+                <section className="bg-white rounded-2xl shadow-card border border-navy/10 p-5 md:p-6 animate-fadeUp">
+                    <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+                        <h2 className="text-lg font-semibold text-navy">Mes classes</h2>
+                        {loadingClasses && <span className="text-sm text-slate">Chargement...</span>}
+                    </div>
+
+                    {!teacherUuid && (
+                        <div className="mb-4 rounded-xl border border-coral/20 bg-coral/10 text-coral text-sm px-3 py-2">
+                            Identifiant enseignant invalide ({teacherId || "absent"}). L'API classes exige un UUID.
+                        </div>
+                    )}
+
+                    {classesError && (
+                        <div className="mb-4 rounded-xl border border-coral/20 bg-coral/10 text-coral text-sm px-3 py-2">
+                            {classesError}
+                        </div>
+                    )}
+
+                    {!loadingClasses && teacherClasses.length === 0 ? (
+                        <p className="text-sm text-slate">Aucune classe trouvée pour cet enseignant.</p>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            {teacherClasses.map((classe) => (
+                                <article key={classe.id} className="rounded-xl border border-navy/10 bg-ice/30 p-4">
+                                    <div className="flex items-start justify-between gap-2 mb-3">
+                                        <div>
+                                            <h3 className="text-base font-semibold text-navy">{classe.name}</h3>
+                                            <p className="text-xs text-slate mt-0.5">Niveau: {classe.levelClasse || "-"}</p>
+                                        </div>
+                                        <span className="inline-flex px-2 py-0.5 rounded-full bg-teal/10 text-teal text-[11px] font-semibold">
+                                            {classe.eleves?.length || 0} élève(s)
+                                        </span>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2 text-xs mb-3">
+                                        <div className="rounded-lg border border-navy/10 bg-white px-2 py-1.5">
+                                            <p className="text-slate">Année</p>
+                                            <p className="text-navy font-medium">{classe.anneeScolaire || "-"}</p>
+                                        </div>
+                                        <div className="rounded-lg border border-navy/10 bg-white px-2 py-1.5">
+                                            <p className="text-slate">Salle</p>
+                                            <p className="text-navy font-medium">{classe.salleAttribuee || "Non définie"}</p>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <p className="text-[12px] font-semibold text-slate mb-2">Élèves</p>
+                                        {!classe.eleves || classe.eleves.length === 0 ? (
+                                            <p className="text-xs text-slate italic">Aucun élève dans cette classe.</p>
+                                        ) : (
+                                            <div className="space-y-1.5 max-h-44 overflow-y-auto pr-1">
+                                                {classe.eleves.map((eleve) => (
+                                                    <div key={eleve.id} className="rounded-lg border border-navy/10 bg-white px-2.5 py-2">
+                                                        <p className="text-sm text-navy font-medium leading-tight">{eleve.prenom} {eleve.nom}</p>
+                                                        <p className="text-[11px] text-slate leading-tight mt-0.5">{eleve.email}</p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </article>
+                            ))}
                         </div>
                     )}
                 </section>
