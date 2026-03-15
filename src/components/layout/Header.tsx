@@ -1,5 +1,6 @@
-import React from "react";
 import { useAuth } from "../../context/AuthContext";
+import NotificationBell from "./NotificationBell";
+
 
 export default function Header() {
     const { logout } = useAuth();
@@ -17,12 +18,8 @@ export default function Header() {
                     </svg>
                     <input className="bg-transparent outline-none text-[13px] text-navy placeholder-slate w-full" placeholder="Rechercher…" />
                 </div>
-                <button className="relative w-10 h-10 rounded-xl bg-ice border border-navy/10 flex items-center justify-center hover:bg-navy hover:border-navy transition-all group">
-                    <svg className="w-5 h-5 text-navy group-hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 01-3.46 0" />
-                    </svg>
-                    <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-coral border-2 border-white"></span>
-                </button>
+                {/* Live Notification Bell */}
+                <NotificationBell />
                 <button onClick={logout} title="Déconnexion" className="w-10 h-10 rounded-xl bg-ice border border-navy/10 flex items-center justify-center hover:bg-navy hover:border-navy transition-all group">
                     <svg className="w-5 h-5 text-navy group-hover:text-white transition-colors" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>

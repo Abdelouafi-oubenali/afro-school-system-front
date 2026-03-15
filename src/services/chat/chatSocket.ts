@@ -6,12 +6,15 @@ export type ChatConnectionStatus = "disconnected" | "connecting" | "connected" |
 
 type MessageHandler = (message: ChatMessage) => void;
 type StatusHandler = (status: ChatConnectionStatus) => void;
+export type NotificationHandler = (notification: Record<string, unknown>) => void;
 
 const CHAT_WS_BASE_URL = import.meta.env.VITE_CHAT_WS_BASE_URL || "/message-notification-service";
 
 class ChatSocketService {
     private client: Client | null = null;
-    private subscription: StompSubscription | null = null;
+    private messageSubscription: StompSubscription | null = null;
+    private notificationSubscription: StompSubscription | null = null;
+    private pendingNotificationHandler: NotificationHandler | null = null;
 
     private parseIncomingMessage(frame: IMessage): ChatMessage | null {
         try {
@@ -53,10 +56,17 @@ class ChatSocketService {
             debug: () => undefined,
             onConnect: () => {
                 onStatus("connected");
-                this.subscription = this.client?.subscribe("/user/queue/messages", (frame: IMessage) => {
+
+                // Messages subscription
+                this.messageSubscription = this.client?.subscribe("/user/queue/messages", (frame: IMessage) => {
                     const incoming = this.parseIncomingMessage(frame);
                     if (incoming) onMessage(incoming);
                 }) || null;
+
+                // Notification subscription (attach immediately if a handler was registered before connect)
+                if (this.pendingNotificationHandler) {
+                    this._attachNotificationSubscription(this.pendingNotificationHandler);
+                }
             },
             onStompError: () => {
                 onStatus("disconnected");
@@ -72,6 +82,41 @@ class ChatSocketService {
         this.client.activate();
     }
 
+    /** Subscribe to /user/queue/notifications. Safe to call before connect(). */
+    subscribeNotifications(handler: NotificationHandler): void {
+        this.pendingNotificationHandler = handler;
+        if (this.client?.connected) {
+            this._attachNotificationSubscription(handler);
+        }
+    }
+
+    /** Remove the notification subscription without disconnecting the whole client. */
+    unsubscribeNotifications(): void {
+        this.pendingNotificationHandler = null;
+        if (this.notificationSubscription) {
+            this.notificationSubscription.unsubscribe();
+            this.notificationSubscription = null;
+        }
+    }
+
+    private _attachNotificationSubscription(handler: NotificationHandler): void {
+        if (this.notificationSubscription) {
+            this.notificationSubscription.unsubscribe();
+            this.notificationSubscription = null;
+        }
+        this.notificationSubscription = this.client?.subscribe(
+            "/user/queue/notifications",
+            (frame: IMessage) => {
+                try {
+                    const parsed = JSON.parse(frame.body) as Record<string, unknown>;
+                    handler(parsed);
+                } catch {
+                    // ignore malformed frames
+                }
+            }
+        ) || null;
+    }
+
     sendMessage(payload: ChatSendPayload): void {
         if (!this.client || !this.client.connected) {
             throw new Error("WebSocket non connecté");
@@ -84,10 +129,17 @@ class ChatSocketService {
     }
 
     disconnect(): void {
-        if (this.subscription) {
-            this.subscription.unsubscribe();
-            this.subscription = null;
+        if (this.messageSubscription) {
+            this.messageSubscription.unsubscribe();
+            this.messageSubscription = null;
         }
+
+        if (this.notificationSubscription) {
+            this.notificationSubscription.unsubscribe();
+            this.notificationSubscription = null;
+        }
+
+        this.pendingNotificationHandler = null;
 
         if (this.client) {
             this.client.deactivate();
@@ -98,3 +150,4 @@ class ChatSocketService {
 
 const chatSocket = new ChatSocketService();
 export default chatSocket;
+
