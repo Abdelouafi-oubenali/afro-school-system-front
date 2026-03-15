@@ -23,10 +23,9 @@ export default defineConfig({
         changeOrigin: true,
       },
       "/message-notification-service": {
-        target: "http://localhost:8085",
+        target: "http://localhost:8080",
         changeOrigin: true,
         ws: true,
-        rewrite: (path) => path.replace(/^\/message-notification-service/, ""),
       },
 
     },
