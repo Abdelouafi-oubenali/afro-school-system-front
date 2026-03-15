@@ -15,9 +15,21 @@ type AuthContextType = {
   logout: () => void;
   loading: boolean;
   error: string | null;
+  isStudent: boolean;
+  isTeacher: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const isTeacherRole = (role?: string) => {
+  const normalized = (role || '').toLowerCase();
+  return normalized.includes('enseign');
+};
+
+export const isStudentRole = (role?: string) => {
+  const normalized = (role || '').toLowerCase();
+  return normalized.includes('eleve') || normalized.includes('student');
+};
+
 const USER_STORAGE_KEY = "auth_user";
 
 function extractToken(data: any): string | null {
@@ -188,7 +200,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       localStorage.setItem("token", token);
-      
+
       const rawUserData = data.user || {
         id: data.id,
         name: data.name,
@@ -224,8 +236,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     window.location.href = "/login";
   };
 
+  const isStudent = user ? isStudentRole(user.role) : false;
+  const isTeacher = user ? isTeacherRole(user.role) : false;
+
   return (
-    <AuthContext.Provider value={{ user, login: loginHandler, logout, loading, error }}>
+    <AuthContext.Provider value={{ user, login: loginHandler, logout, loading, error, isStudent, isTeacher }}>
       {children}
     </AuthContext.Provider>
   );

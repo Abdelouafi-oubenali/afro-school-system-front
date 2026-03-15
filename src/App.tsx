@@ -12,29 +12,28 @@ import Absences from './pages/admin/Absences.tsx';
 import Notes from './pages/admin/Notes.tsx';
 import EnseignantDashboard from './pages/enseignant/Dashboard';
 import ChatPage from './pages/shared/Chat';
-import { useAuth } from './context/AuthContext';
+import EleveDashboard from './pages/eleve/Dashboard';
+import { useAuth, isTeacherRole, isStudentRole } from './context/AuthContext';
 import './App.css';
-
-const isTeacherRole = (role?: string) => {
-  const normalized = (role || '').toLowerCase();
-  return normalized.includes('enseign');
-};
 
 function App() {
   const { user } = useAuth();
   const teacherHome = '/enseignant';
-  const defaultHome = user && isTeacherRole(user.role) ? teacherHome : '/dashboard';
+  const studentHome = '/eleve';
+  const defaultHome = user
+    ? (isTeacherRole(user.role) ? teacherHome : isStudentRole(user.role) ? studentHome : '/dashboard')
+    : '/login';
 
   return (
     <Router>
       <Routes>
-        <Route 
-          path="/login" 
-          element={user ? <Navigate to={defaultHome} replace /> : <Login />} 
+        <Route
+          path="/login"
+          element={user ? <Navigate to={defaultHome} replace /> : <Login />}
         />
-        <Route 
-          path="/dashboard" 
-          element={user ? <Dashboard /> : <Navigate to="/login" replace />} 
+        <Route
+          path="/dashboard"
+          element={user ? <Dashboard /> : <Navigate to="/login" replace />}
         />
         <Route
           path="/eleves"
@@ -84,9 +83,17 @@ function App() {
               : <Navigate to="/login" replace />
           }
         />
-        <Route 
-          path="/" 
-          element={<Navigate to={user ? defaultHome : "/login"} replace />} 
+        <Route
+          path="/eleve"
+          element={
+            user
+              ? (isStudentRole(user.role) ? <EleveDashboard /> : <Navigate to="/dashboard" replace />)
+              : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/"
+          element={<Navigate to={user ? defaultHome : "/login"} replace />}
         />
       </Routes>
     </Router>

@@ -13,6 +13,7 @@ export interface Eleve {
     role?: string;
     classe?: string | null;
     classeId?: string | null;
+    classeNom?: string | null;
 }
 
 export interface EleveCreatePayload {
@@ -231,12 +232,36 @@ class EleveService {
     }
 
 
+    async getEleveById(id: string): Promise<Eleve> {
+        const candidateRoutes = [`/users/eleve/${id}`, `/eleve/${id}`];
+        let lastError: unknown = null;
+
+        for (const route of candidateRoutes) {
+            try {
+                const response = await axios.get(`${API_URL}${route}`, {
+                    headers: this.getAuthHeaders(),
+                });
+                return response.data;
+            } catch (error) {
+                lastError = error;
+                if (axios.isAxiosError(error) && error.response?.status === 404) continue;
+                break;
+            }
+        }
+
+        if (axios.isAxiosError(lastError)) {
+            throw new Error(`Echec de chargement du profil eleve: ${lastError.response?.status || "inconnu"}`);
+        }
+        throw new Error("Echec de chargement du profil eleve");
+    }
+
     async deleteEleve(id: string): Promise<void> {
-        try {     
-               await axios.delete(`${API_URL}/users/eleve/${id}`, {
+        try {
+            await axios.delete(`${API_URL}/users/eleve/${id}`, {
                 headers: this.getAuthHeaders(),
             });
-        } catch (error) {            if (axios.isAxiosError(error)) {
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
                 const status = error.response?.status;
                 const method = error.config?.method?.toUpperCase() || "DELETE";
                 const url = error.config?.url || `${API_URL}/users/eleve/${id}`;

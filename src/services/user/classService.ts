@@ -131,6 +131,18 @@ class ClassService {
         }
     }
 
+    async getClassById(id: string): Promise<ClassRoom | null> {
+        try {
+            const response = await axios.get(`${API_URL}/${id}`, {
+                headers: this.getAuthHeaders(),
+            });
+            return this.normalizeSingleClassResponse(response.data);
+        } catch (error) {
+            if (axios.isAxiosError(error) && error.response?.status === 404) return null;
+            throw error;
+        }
+    }
+
     async getClassesByEnseignant(enseignantId: string): Promise<ClassRoom[]> {
         try {
             const response = await axios.get(`${API_URL}/enseignant/${enseignantId}`, {
@@ -330,14 +342,14 @@ class ClassService {
             const response = await axios.get(`${API_URL}/${id}/enseignants`, {
                 headers: this.getAuthHeaders(),
             });
-            
+
             if (Array.isArray(response.data)) return response.data as ClassEnseignant[];
-            
+
             const obj = response.data as Record<string, unknown>;
             if (Array.isArray(obj.data)) return obj.data as ClassEnseignant[];
             if (Array.isArray(obj.content)) return obj.content as ClassEnseignant[];
             if (Array.isArray(obj.enseignants)) return obj.enseignants as ClassEnseignant[];
-            
+
             return [];
         } catch (error) {
             if (axios.isAxiosError(error)) {
