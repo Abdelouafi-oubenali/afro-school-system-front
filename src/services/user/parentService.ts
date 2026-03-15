@@ -256,6 +256,23 @@ class ParentService {
             throw new Error("Echec de suppression parent: erreur inattendue");
         }
     }
+    async getParentById(id: string): Promise<Parent> {
+        const candidateRoutes = [`/users/parent/${id}`, `/parent/${id}`];
+        let lastError: unknown = null;
+
+        for (const route of candidateRoutes) {
+            try {
+                const response = await axios.get(`${API_URL}${route}`, {
+                    headers: this.getAuthHeaders(),
+                });
+                return response.data;
+            } catch (error) {
+                lastError = error;
+                if (!axios.isAxiosError(error) || error.response?.status !== 404) break;
+            }
+        }
+        throw lastError || new Error("Parent introuvable");
+    }
 }
 
 const parentService = new ParentService();

@@ -13,15 +13,17 @@ import Notes from './pages/admin/Notes.tsx';
 import EnseignantDashboard from './pages/enseignant/Dashboard';
 import ChatPage from './pages/shared/Chat';
 import EleveDashboard from './pages/eleve/Dashboard';
-import { useAuth, isTeacherRole, isStudentRole } from './context/AuthContext';
+import ParentDashboard from './pages/parent/Dashboard';
+import { useAuth, isTeacherRole, isStudentRole, isParentRole } from './context/AuthContext';
 import './App.css';
 
 function App() {
   const { user } = useAuth();
   const teacherHome = '/enseignant';
   const studentHome = '/eleve';
+  const parentHome = '/parent';
   const defaultHome = user
-    ? (isTeacherRole(user.role) ? teacherHome : isStudentRole(user.role) ? studentHome : '/dashboard')
+    ? (isTeacherRole(user.role) ? teacherHome : isStudentRole(user.role) ? studentHome : isParentRole(user.role) ? parentHome : '/dashboard')
     : '/login';
 
   return (
@@ -88,6 +90,14 @@ function App() {
           element={
             user
               ? (isStudentRole(user.role) ? <EleveDashboard /> : <Navigate to="/dashboard" replace />)
+              : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/parent"
+          element={
+            user
+              ? (isParentRole(user.role) ? <ParentDashboard /> : <Navigate to="/dashboard" replace />)
               : <Navigate to="/login" replace />
           }
         />

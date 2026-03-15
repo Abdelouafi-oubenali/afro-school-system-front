@@ -5,7 +5,7 @@ import ConversationList from "../../components/chat/ConversationList";
 import ChatHeader from "../../components/chat/ChatHeader";
 import MessageList from "../../components/chat/MessageList";
 import MessageInput from "../../components/chat/MessageInput";
-import { useAuth, isTeacherRole, isStudentRole } from "../../context/AuthContext";
+import { useAuth, isTeacherRole, isStudentRole, isParentRole } from "../../context/AuthContext";
 import { useChat } from "../../hooks/useChat";
 import { useChatContacts } from "../../hooks/useChatContacts";
 
@@ -19,12 +19,13 @@ export default function ChatPage() {
 
     const isTeacher = isTeacherRole(user.role);
     const isStudent = isStudentRole(user.role);
+    const isParent = isParentRole(user.role);
 
-    const backUrl = isTeacher ? "/enseignant" : isStudent ? "/eleve" : "/dashboard";
+    const backUrl = isTeacher ? "/enseignant" : isStudent ? "/eleve" : isParent ? "/parent" : "/dashboard";
 
     return (
-        <div className={`min-h-screen bg-ice text-navy font-sans ${isTeacher || isStudent ? 'p-4 md:p-6' : ''}`}>
-            {!(isTeacher || isStudent) ? (
+        <div className={`min-h-screen bg-ice text-navy font-sans ${isTeacher || isStudent || isParent ? 'p-4 md:p-6' : ''}`}>
+            {!(isTeacher || isStudent || isParent) ? (
                 <Layout>
                     <ChatContent
                         user={user}
@@ -50,7 +51,17 @@ export default function ChatPage() {
 }
 
 function ChatContent({ user, backUrl, mobilePane, setMobilePane, searchQuery, setSearchQuery }: any) {
-    const { contacts, loading: loadingContacts } = useChatContacts(user.id);
+    let { contacts, loading: loadingContacts } = useChatContacts(user.id);
+
+    // Restriction for parents: only see Admins and Teachers
+    if (isParentRole(user.role)) {
+        contacts = contacts.filter(c =>
+            c.role === "ADMIN" ||
+            c.role === "ENSEIGNANT" ||
+            (c.role || "").toLowerCase().includes("admin") ||
+            (c.role || "").toLowerCase().includes("enseign")
+        );
+    }
 
     const {
         connectionStatus,
@@ -103,7 +114,7 @@ function ChatContent({ user, backUrl, mobilePane, setMobilePane, searchQuery, se
                         <h2 className="text-sm font-semibold text-navy">Conversations</h2>
                         <p className="text-xs text-slate mt-0.5">
                             {loadingContacts ? "Chargement des contacts..." : `${filteredConversations.length} / ${contacts.length} contact(s)`}
-                        </p>
+                        </p >
                         <div className="mt-2 relative">
                             <input
                                 type="text"
@@ -113,7 +124,7 @@ function ChatContent({ user, backUrl, mobilePane, setMobilePane, searchQuery, se
                                 className="w-full rounded-xl border border-navy/15 bg-white px-3 py-2 text-sm text-navy placeholder:text-slate outline-none focus:border-teal/40 focus:ring-2 focus:ring-teal/15"
                             />
                         </div>
-                    </div>
+                    </div >
                     <div className="flex-1 overflow-y-auto">
                         <ConversationList
                             conversations={filteredConversations}
@@ -121,7 +132,7 @@ function ChatContent({ user, backUrl, mobilePane, setMobilePane, searchQuery, se
                             onSelect={handleSelectConversation}
                         />
                     </div>
-                </aside>
+                </aside >
 
                 <section className={`${mobilePane === "chat" ? "flex" : "hidden"} md:flex flex-1 flex-col min-w-0`}>
                     <ChatHeader
@@ -146,7 +157,7 @@ function ChatContent({ user, backUrl, mobilePane, setMobilePane, searchQuery, se
                         onSend={sendMessage}
                     />
                 </section>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

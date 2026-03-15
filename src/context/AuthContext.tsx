@@ -17,6 +17,7 @@ type AuthContextType = {
   error: string | null;
   isStudent: boolean;
   isTeacher: boolean;
+  isParent: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -28,6 +29,11 @@ export const isTeacherRole = (role?: string) => {
 export const isStudentRole = (role?: string) => {
   const normalized = (role || '').toLowerCase();
   return normalized.includes('eleve') || normalized.includes('student');
+};
+
+export const isParentRole = (role?: string) => {
+  const normalized = (role || '').toLowerCase();
+  return normalized.includes('parent');
 };
 
 const USER_STORAGE_KEY = "auth_user";
@@ -238,9 +244,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const isStudent = user ? isStudentRole(user.role) : false;
   const isTeacher = user ? isTeacherRole(user.role) : false;
+  const isParent = user ? isParentRole(user.role) : false;
 
   return (
-    <AuthContext.Provider value={{ user, login: loginHandler, logout, loading, error, isStudent, isTeacher }}>
+    <AuthContext.Provider value={{ user, login: loginHandler, logout, loading, error, isStudent, isTeacher, isParent }}>
       {children}
     </AuthContext.Provider>
   );
