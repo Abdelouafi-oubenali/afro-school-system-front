@@ -3,6 +3,8 @@ import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import EnseignentList from "../../components/enseignents/EnseignentList";
 import { useEnseignents } from "../../hooks/useEnseignents";
+import { useClasses } from "../../hooks/useClasses";
+import classService from "../../services/user/classService";
 import enseignentService from "../../services/user/enseignentService";
 import seanceService from "../../services/user/seanceService";
 import type { Enseignent, EnseignentCreatePayload, EnseignentUpdatePayload } from "../../services/user/enseignentService";
@@ -36,11 +38,13 @@ export default function Enseignents() {
     const [searchTerm, setSearchTerm] = useState("");
     const [listRefreshKey, setListRefreshKey] = useState(0);
     const { enseignents } = useEnseignents(listRefreshKey);
+    const { classes } = useClasses();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [selectedEnseignent, setSelectedEnseignent] = useState<Enseignent | null>(null);
     const [emploiEnseignant, setEmploiEnseignant] = useState<EmploiEntry[]>([]);
     const [loadingEmploiEnseignant, setLoadingEmploiEnseignant] = useState(false);
     const [emploiEnseignantError, setEmploiEnseignantError] = useState<string | null>(null);
+    const [selectedEnseignentClassesNames, setSelectedEnseignentClassesNames] = useState<string[]>([]);
     const [formData, setFormData] = useState<EnseignentCreatePayload>({
         nom: "",
         prenom: "",
@@ -98,10 +102,21 @@ export default function Enseignents() {
         setFormError(null);
         setEmploiEnseignant([]);
         setEmploiEnseignantError(null);
+        setSelectedEnseignentClassesNames([]);
 
         try {
             setLoadingEmploiEnseignant(true);
-            const emploi = await seanceService.getEmploiByEnseignant(item.id);
+            const [emploi, teacherClasses] = await Promise.all([
+                seanceService.getEmploiByEnseignant(item.id),
+                classService.getClassesByEnseignant(item.id).catch(() => []),
+            ]);
+
+            if (teacherClasses.length > 0) {
+                setSelectedEnseignentClassesNames(
+                    teacherClasses.map((classe) => classe.name).filter(Boolean)
+                );
+            }
+
             const sortedEmploi = [...emploi].sort((a, b) => {
                 const dayA = a.jour ? (JOUR_ORDER[a.jour] ?? 99) : 99;
                 const dayB = b.jour ? (JOUR_ORDER[b.jour] ?? 99) : 99;
@@ -181,6 +196,25 @@ export default function Enseignents() {
     const avecSpecialite = enseignents.filter((e) => Boolean(e.specialite || e.matiere)).length;
     const avecClasse = enseignents.filter((e) => Boolean((e.classes && e.classes.length > 0) || e.classe)).length;
 
+    const resolveClassName = (value: string | number | null | undefined) => {
+        if (value === null || value === undefined) return "";
+        const raw = String(value).trim();
+        if (!raw) return "";
+        const found = classes.find((c) => c.id === raw);
+        return found?.name || raw;
+    };
+
+    const selectedEnseignentClassesLabel = selectedEnseignent
+        ? (selectedEnseignentClassesNames.length > 0
+            ? selectedEnseignentClassesNames.join(", ")
+            : selectedEnseignent.classes?.length
+            ? selectedEnseignent.classes
+                .map((classValue) => resolveClassName(classValue))
+                .filter(Boolean)
+                .join(", ")
+            : resolveClassName(selectedEnseignent.classe) || "-")
+        : "-";
+
     return (
         <Layout>
             {selectedEnseignent ? (
@@ -206,7 +240,7 @@ export default function Enseignents() {
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Date de naissance</p><p className="text-sm font-medium text-navy">{formatDisplayDate(selectedEnseignent.dateNaissance)}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Spécialité</p><p className="text-sm font-medium text-navy">{selectedEnseignent.specialite || selectedEnseignent.matiere || "-"}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Date d'embauche</p><p className="text-sm font-medium text-navy">{formatDisplayDate(selectedEnseignent.dateEmbauche || "")}</p></div>
-                        <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Classes</p><p className="text-sm font-medium text-navy">{selectedEnseignent.classes?.length ? selectedEnseignent.classes.join(", ") : (selectedEnseignent.classe || "-")}</p></div>
+                        <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Classes</p><p className="text-sm font-medium text-navy">{selectedEnseignentClassesLabel}</p></div>
                     </div>
 
                     <div className="border-t border-navy/8 pt-5 mt-6">

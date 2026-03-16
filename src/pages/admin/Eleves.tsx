@@ -3,6 +3,7 @@ import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import EleveList from "../../components/eleves/EleveList";
 import { useEleves } from "../../hooks/useEleves";
+import { useClasses } from "../../hooks/useClasses";
 import eleveService from "../../services/user/eleveService";
 import type { EleveCreatePayload, Eleve, EleveUpdatePayload } from "../../services/user/eleveService";
 
@@ -14,6 +15,7 @@ export default function Eleves() {
   const [searchTerm, setSearchTerm] = useState("");
   const [listRefreshKey, setListRefreshKey] = useState(0);
   const { eleves } = useEleves(listRefreshKey);
+  const { classes } = useClasses();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selectedEleve, setSelectedEleve] = useState<Eleve | null>(null);
   const [formData, setFormData] = useState<EleveCreatePayload>({
@@ -156,6 +158,14 @@ export default function Eleves() {
     return !Number.isNaN(birth.getTime()) && birth.getFullYear() >= 2000;
   }).length;
 
+  const selectedEleveClasseName = selectedEleve
+    ? selectedEleve.classeNom
+      || classes.find((c) => c.id === selectedEleve.classeId || c.id === selectedEleve.classe)?.name
+      || selectedEleve.classe
+      || selectedEleve.classeId
+      || "-"
+    : "-";
+
   const couvertureDates = totalEleves > 0
     ? `${Math.round((elevesAvecDate.length / totalEleves) * 100)}% avec date`
     : "Aucune date";
@@ -228,7 +238,7 @@ export default function Eleves() {
             </div>
             <div className="p-3 rounded-xl bg-ice/60 border border-navy/10">
               <p className="text-[11px] uppercase tracking-wide text-slate">Classe</p>
-              <p className="text-sm font-medium text-navy">{selectedEleve.classe || selectedEleve.classeId || "-"}</p>
+              <p className="text-sm font-medium text-navy">{selectedEleveClasseName}</p>
             </div>
             <div className="p-3 rounded-xl bg-ice/60 border border-navy/10">
               <p className="text-[11px] uppercase tracking-wide text-slate">Role</p>

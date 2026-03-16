@@ -340,7 +340,6 @@ export default function Classes() {
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Nom</p><p className="text-sm font-medium text-navy">{selectedClass.name}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Niveau</p><p className="text-sm font-medium text-navy">{selectedClass.levelClasse}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Année scolaire</p><p className="text-sm font-medium text-navy">{selectedClass.anneeScolaire}</p></div>
-                        <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Enseignant principal</p><p className="text-sm font-medium text-navy break-all">{selectedClass.enseignantPrincipal}</p></div>
                     </div>
 
                     {/* ÉLÈVES */}
@@ -680,12 +679,7 @@ export default function Classes() {
                                         <div><label className="block text-[12px] font-semibold text-slate mb-1.5">Année scolaire</label><input type="text" required value={formData.anneeScolaire} onChange={(e) => updateField("anneeScolaire", e.target.value)} className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal" placeholder="2024-2025" /></div>
                                     </div>
 
-                                    <div><label className="block text-[12px] font-semibold text-slate mb-1.5">Enseignant principal (UUID)</label><input type="text" required value={formData.enseignantPrincipal} onChange={(e) => updateField("enseignantPrincipal", e.target.value)} className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal" placeholder="00000000-0000-0000-0000-000000000001" /></div>
 
-                                    <div className="flex items-center justify-end gap-3 pt-2">
-                                        <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-4 py-2.5 rounded-xl border border-navy/10 text-navy text-sm font-medium hover:bg-ice transition-colors">Annuler</button>
-                                        <button type="submit" disabled={isSubmitting} className="px-4 py-2.5 rounded-xl nav-active text-white text-sm font-semibold shadow-teal disabled:opacity-60">{isSubmitting ? (editingId ? "Modification..." : "Creation...") : (editingId ? "Mettre à jour" : "Creer classe")}</button>
-                                    </div>
                                 </form>
                             </div>
                         </div>

@@ -2,6 +2,7 @@ import { useState } from "react";
 import Layout from "../../components/layout/Layout";
 import StatCard from "../../components/layout/StatCard";
 import ParentList from "../../components/parents/ParentList";
+import { useEleves } from "../../hooks/useEleves";
 import { useParents } from "../../hooks/useParents";
 import parentService from "../../services/user/parentService";
 import type { Parent, ParentCreatePayload, ParentUpdatePayload } from "../../services/user/parentService";
@@ -14,6 +15,7 @@ export default function Parents() {
     const [searchTerm, setSearchTerm] = useState("");
     const [listRefreshKey, setListRefreshKey] = useState(0);
     const { parents } = useParents(listRefreshKey);
+    const { eleves } = useEleves();
     const [editingId, setEditingId] = useState<string | null>(null);
     const [selectedParent, setSelectedParent] = useState<Parent | null>(null);
     const [formData, setFormData] = useState<ParentCreatePayload>({
@@ -30,23 +32,16 @@ export default function Parents() {
         setFormData((prev) => ({ ...prev, [field]: value }));
     };
 
-    const addChildIdField = () => {
-        setFormData((prev) => ({ ...prev, childIds: [...prev.childIds, ""] }));
-    };
-
-    const updateChildIdAt = (index: number, value: string) => {
+    const toggleChildSelection = (childId: string) => {
         setFormData((prev) => {
-            const next = [...prev.childIds];
-            next[index] = value;
-            return { ...prev, childIds: next };
+            const alreadySelected = prev.childIds.includes(childId);
+            return {
+                ...prev,
+                childIds: alreadySelected
+                    ? prev.childIds.filter((id) => id !== childId)
+                    : [...prev.childIds, childId],
+            };
         });
-    };
-
-    const removeChildIdAt = (index: number) => {
-        setFormData((prev) => ({
-            ...prev,
-            childIds: prev.childIds.filter((_, i) => i !== index),
-        }));
     };
 
     const resetForm = () => {
@@ -156,6 +151,15 @@ export default function Parents() {
     const avecEnfants = parents.filter((p) => (p.childIds?.length ?? 0) > 0).length;
     const sansEnfants = totalParents - avecEnfants;
 
+    const selectedParentChildrenNames = selectedParent?.childIds?.length
+        ? selectedParent.childIds
+            .map((childId) => {
+                const eleve = eleves.find((item) => item.id === childId);
+                return eleve ? `${eleve.prenom} ${eleve.nom}` : childId;
+            })
+            .join(", ")
+        : "-";
+
     return (
         <Layout>
             {selectedParent ? (
@@ -180,7 +184,7 @@ export default function Parents() {
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Téléphone</p><p className="text-sm font-medium text-navy">{selectedParent.phone || "-"}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Date de naissance</p><p className="text-sm font-medium text-navy">{formatDisplayDate(selectedParent.dateNaissance)}</p></div>
                         <div className="p-3 rounded-xl bg-ice/60 border border-navy/10"><p className="text-[11px] uppercase tracking-wide text-slate">Role</p><p className="text-sm font-medium text-navy">{selectedParent.role || "PARENT"}</p></div>
-                        <div className="p-3 rounded-xl bg-ice/60 border border-navy/10 md:col-span-2"><p className="text-[11px] uppercase tracking-wide text-slate">Child IDs</p><p className="text-sm font-medium text-navy break-all">{selectedParent.childIds?.length ? selectedParent.childIds.join(", ") : "-"}</p></div>
+                        <div className="p-3 rounded-xl bg-ice/60 border border-navy/10 md:col-span-2"><p className="text-[11px] uppercase tracking-wide text-slate">Enfants</p><p className="text-sm font-medium text-navy break-all">{selectedParentChildrenNames}</p></div>
                     </div>
                 </div>
             ) : (
@@ -234,40 +238,35 @@ export default function Parents() {
 
                                     <div>
                                         <div className="flex items-center justify-between mb-1.5">
-                                            <label className="block text-[12px] font-semibold text-slate">Child IDs</label>
-                                            <button
-                                                type="button"
-                                                onClick={addChildIdField}
-                                                className="text-[12px] font-semibold text-teal hover:text-teal/80 transition-colors"
-                                            >
-                                                + Ajouter un enfant
-                                            </button>
+                                            <label className="block text-[12px] font-semibold text-slate">Enfants</label>
                                         </div>
 
-                                        <div className="space-y-2">
-                                            {formData.childIds.length === 0 && (
-                                                <p className="text-[12px] text-slate">Aucun enfant ajouté.</p>
+                                        <div className="rounded-xl border border-navy/10 bg-white p-3 max-h-52 overflow-y-auto space-y-1">
+                                            {eleves.length === 0 ? (
+                                                <p className="text-[12px] text-slate">Aucun élève disponible.</p>
+                                            ) : (
+                                                eleves.map((eleve) => {
+                                                    const checked = formData.childIds.includes(eleve.id);
+                                                    return (
+                                                        <label key={eleve.id} className="flex items-center gap-2 cursor-pointer py-1 rounded hover:bg-ice/40 px-1">
+                                                            <input
+                                                                type="checkbox"
+                                                                checked={checked}
+                                                                onChange={() => toggleChildSelection(eleve.id)}
+                                                                className="accent-teal w-4 h-4"
+                                                            />
+                                                            <span className="text-sm text-navy">{eleve.prenom} {eleve.nom}</span>
+                                                        </label>
+                                                    );
+                                                })
                                             )}
-
-                                            {formData.childIds.map((childId, index) => (
-                                                <div key={`${index}-${childId}`} className="flex items-center gap-2">
-                                                    <input
-                                                        type="text"
-                                                        value={childId}
-                                                        onChange={(e) => updateChildIdAt(index, e.target.value)}
-                                                        className="w-full rounded-xl border border-navy/10 bg-white px-3 py-2.5 text-sm text-navy outline-none focus:border-teal"
-                                                        placeholder="UUID élève"
-                                                    />
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeChildIdAt(index)}
-                                                        className="px-3 py-2.5 rounded-xl border border-coral/30 text-coral text-xs font-semibold hover:bg-coral/5 transition-colors"
-                                                    >
-                                                        Suppr.
-                                                    </button>
-                                                </div>
-                                            ))}
                                         </div>
+
+                                        {formData.childIds.length > 0 && (
+                                            <p className="text-[12px] text-slate mt-2">
+                                                {formData.childIds.length} enfant{formData.childIds.length > 1 ? "s" : ""} sélectionné{formData.childIds.length > 1 ? "s" : ""}
+                                            </p>
+                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-end gap-3 pt-2">
