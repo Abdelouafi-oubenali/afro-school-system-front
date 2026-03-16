@@ -24,54 +24,63 @@ export default function ParentSidebar({ activeView, setActiveView }: ParentSideb
     ];
 
     return (
-        <aside className="w-72 bg-white border-r border-slate-200 flex flex-col hidden lg:flex h-screen sticky top-0 shadow-sm">
-            <div className="p-8">
-                <div className="flex items-center gap-3 mb-10">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-100">
-                        <span className="text-white font-black text-xl">D</span>
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-black text-slate-800 tracking-tight leading-none">DNAS</h1>
-                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mt-1">Espace Parent</p>
-                    </div>
+        <aside className="fixed top-0 left-0 w-64 min-h-screen bg-navy flex flex-col z-50 shadow-2xl transition-all duration-300">
+            {/* Logo */}
+            <div className="flex items-center gap-3 px-6 py-7 border-b border-white/10">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0E9E8E,#16BCA8)' }}>
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 2.18L20.49 9 12 12.82 3.51 9 12 5.18zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
+                    </svg>
                 </div>
-
-                <nav className="space-y-2">
-                    {menuItems.map((item) => (
-                        item.id === "chat" ? (
-                            <Link
-                                key={item.id}
-                                to="/chat"
-                                className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 text-slate-500 hover:bg-slate-50 hover:text-indigo-600"
-                            >
-                                <span className="opacity-70">{item.icon}</span>
-                                {item.label}
-                            </Link>
-                        ) : (
-                            <button
-                                key={item.id}
-                                onClick={() => setActiveView(item.id)}
-                                className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-sm font-bold transition-all duration-200 ${activeView === item.id
-                                        ? "bg-indigo-50 text-indigo-600 shadow-sm ring-1 ring-indigo-100"
-                                        : "text-slate-500 hover:bg-slate-50 hover:text-indigo-600"
-                                    }`}
-                            >
-                                <span className={`${activeView === item.id ? "opacity-100" : "opacity-70"}`}>{item.icon}</span>
-                                {item.label}
-                            </button>
-                        )
-                    ))}
-                </nav>
-            </div>
-
-            <div className="mt-auto p-6">
-                <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3 text-center">Support</p>
-                    <button className="w-full py-3 bg-white border border-slate-200 rounded-xl text-xs font-black text-slate-700 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 transition-all shadow-sm">
-                        AIDE & FAQ
-                    </button>
+                <div>
+                    <h1 className="font-display text-white text-[15px] font-bold tracking-wide">Afro-School</h1>
+                    <span className="text-teal-lt text-[10px] font-semibold tracking-widest uppercase opacity-80">System Parent</span>
                 </div>
             </div>
-        </aside>
+
+            <nav className="flex-1 py-6 overflow-y-auto px-3 space-y-1.5">
+                <p className="px-3 pt-2 pb-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/40">Principal</p>
+                {menuItems.map((item) => (
+                    item.id === "chat" ? (
+                        <Link
+                            key={item.id}
+                            to="/chat"
+                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white transition-all group"
+                        >
+                            <div className="p-1.5 rounded-lg bg-white/5 text-white/60 group-hover:text-blue-400 transition-colors">
+                                {item.icon}
+                            </div>
+                            {item.label}
+                        </Link>
+                    ) : (
+                        <button
+                            key={item.id}
+                            onClick={() => setActiveView(item.id)}
+                            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${activeView === item.id
+                                ? "bg-white/10 text-white shadow-inner"
+                                : "text-white/60 hover:bg-white/5 hover:text-white"
+                                }`}
+                        >
+                            <div className={`p-1.5 rounded-lg transition-colors ${activeView === item.id ? "bg-teal/20 text-teal" : "bg-white/5 text-white/60 group-hover:text-teal"}`}>
+                                {item.icon}
+                            </div>
+                            {item.label}
+                        </button>
+                    )
+                ))}
+            </nav>
+
+            <div className="p-4 mx-3 mb-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-navy flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0E9E8E,#16BCA8)' }}>
+                        PR
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-white text-sm font-semibold truncate leading-tight">Mon Compte</p>
+                        <span className="text-teal-lt text-[11px] font-medium block mt-0.5">Parent Connecté</span>
+                    </div>
+                </div>
+            </div>
+        </aside >
     );
 }

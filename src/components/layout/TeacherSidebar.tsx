@@ -11,15 +11,15 @@ export default function TeacherSidebar({ activeView, setActiveView }: TeacherSid
     return (
         <aside className="fixed top-0 left-0 w-64 min-h-screen bg-navy flex flex-col z-50 shadow-2xl transition-all duration-300">
             {/* Logo */}
-            <div className="flex items-center gap-3 px-6 py-8 border-b border-white/5">
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 bg-gradient-to-br from-gold to-orange-400 shadow-lg shadow-gold/20">
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            <div className="flex items-center gap-3 px-6 py-7 border-b border-white/10">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0E9E8E,#16BCA8)' }}>
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 2.18L20.49 9 12 12.82 3.51 9 12 5.18zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
                     </svg>
                 </div>
                 <div>
-                    <h1 className="font-display text-white text-[17px] font-bold leading-tight tracking-wide">Espace Prof</h1>
-                    <span className="text-gold text-[10px] font-semibold tracking-widest uppercase opacity-80">Portail Enseignant</span>
+                    <h1 className="font-display text-white text-[15px] font-bold tracking-wide">Afro-School</h1>
+                    <span className="text-teal-lt text-[10px] font-semibold tracking-widest uppercase opacity-80">System Prof</span>
                 </div>
             </div>
 
@@ -30,8 +30,8 @@ export default function TeacherSidebar({ activeView, setActiveView }: TeacherSid
                 <button
                     onClick={() => setActiveView("emploi")}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${activeView === "emploi"
-                            ? "bg-white/10 text-white shadow-inner"
-                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 text-white shadow-inner"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                 >
                     <div className={`p-1.5 rounded-lg transition-colors ${activeView === "emploi" ? "bg-gold/20 text-gold" : "bg-white/5 text-white/60 group-hover:text-gold"}`}>
@@ -48,8 +48,8 @@ export default function TeacherSidebar({ activeView, setActiveView }: TeacherSid
                 <button
                     onClick={() => setActiveView("classes")}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${activeView === "classes"
-                            ? "bg-white/10 text-white shadow-inner"
-                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 text-white shadow-inner"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                 >
                     <div className={`p-1.5 rounded-lg transition-colors ${activeView === "classes" ? "bg-teal/20 text-teal" : "bg-white/5 text-white/60 group-hover:text-teal"}`}>
@@ -67,8 +67,8 @@ export default function TeacherSidebar({ activeView, setActiveView }: TeacherSid
                 <button
                     onClick={() => setActiveView("notes")}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${activeView === "notes"
-                            ? "bg-white/10 text-white shadow-inner"
-                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 text-white shadow-inner"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                 >
                     <div className={`p-1.5 rounded-lg transition-colors ${activeView === "notes" ? "bg-blue-500/20 text-blue-400" : "bg-white/5 text-white/60 group-hover:text-blue-400"}`}>
@@ -86,8 +86,8 @@ export default function TeacherSidebar({ activeView, setActiveView }: TeacherSid
                 <button
                     onClick={() => setActiveView("absences")}
                     className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${activeView === "absences"
-                            ? "bg-white/10 text-white shadow-inner"
-                            : "text-white/60 hover:bg-white/5 hover:text-white"
+                        ? "bg-white/10 text-white shadow-inner"
+                        : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                 >
                     <div className={`p-1.5 rounded-lg transition-colors ${activeView === "absences" ? "bg-coral/20 text-coral" : "bg-white/5 text-white/60 group-hover:text-coral"}`}>

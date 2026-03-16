@@ -132,12 +132,10 @@ export default function EleveDashboard() {
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
+        <div className="bg-ice text-navy flex min-h-screen font-sans">
             <StudentSidebar activeView={activeView} setActiveView={setActiveView} />
-
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+            <div className="ml-64 flex-1 flex flex-col min-h-screen bg-transparent">
                 <StudentHeader />
-
                 <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
                     {error && (
                         <div className="mb-6 flex items-start gap-4 rounded-2xl border border-red-200 bg-red-50 text-red-700 p-5 shadow-sm">

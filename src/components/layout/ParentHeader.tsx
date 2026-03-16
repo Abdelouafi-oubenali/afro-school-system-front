@@ -5,36 +5,37 @@ export default function ParentHeader() {
     const { user, logout } = useAuth();
 
     return (
-        <header className="h-20 bg-white border-b border-slate-200 px-6 md:px-8 flex items-center justify-between sticky top-0 z-40">
-            <div className="flex items-center gap-4 lg:hidden">
-                <div className="w-9 h-9 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-100">
-                    <span className="text-white font-black text-base">D</span>
+        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-8 sticky top-0 z-40 transition-all" style={{ boxShadow: '0 4px 24px rgba(26,43,74,.03)' }}>
+            <div className="flex-1">
+                <div className="flex items-center gap-4 lg:hidden">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0E9E8E,#16BCA8)' }}>
+                        <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 2.18L20.49 9 12 12.82 3.51 9 12 5.18zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
+                        </svg>
+                    </div>
                 </div>
-                <h2 className="text-lg font-black text-slate-800 tracking-tight">DNAS</h2>
-            </div>
-
-            <div className="hidden md:flex items-center gap-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-100">
-                <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                </span>
-                <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Système Opérationnel</span>
+                <div className="max-w-md relative hidden lg:flex items-center">
+                    <svg className="w-5 h-5 text-slate-400 absolute left-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <input className="bg-slate-50 border border-slate-200 rounded-xl outline-none text-[13px] text-slate-700 placeholder-slate-400 w-full py-2.5 pl-11 pr-4 focus:ring-2 focus:ring-navy/10 transition-all" placeholder="Rechercher…" />
+                </div>
             </div>
 
             <div className="flex items-center gap-4 md:gap-6">
-                {/* Live Notification Bell */}
                 <NotificationBell />
 
-                <div className="flex items-center gap-3 pl-4 md:pl-6 border-l border-slate-200">
+                <div className="h-8 w-px bg-slate-200 mx-1 hidden md:block"></div>
+
+                <div className="flex items-center gap-3">
                     <div className="text-right hidden sm:block">
-                        <p className="text-sm font-black text-slate-800 leading-tight">{user?.name || "Parent"}</p>
-                        <p className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest mt-0.5">Parent d'élève</p>
+                        <p className="text-sm font-bold text-slate-800 leading-none mb-1">{user?.name || "Parent"}</p>
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-navy/5 text-navy border border-navy/10 uppercase tracking-wider">
+                            Parent d'élève
+                        </span>
                     </div>
-                    <button
-                        onClick={logout}
-                        className="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 hover:border-indigo-100 transition-all group"
-                    >
-                        <svg className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <button onClick={logout} title="Déconnexion" className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center hover:bg-coral hover:text-white hover:border-coral transition-all group shadow-sm text-slate-400">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                         </svg>
                     </button>

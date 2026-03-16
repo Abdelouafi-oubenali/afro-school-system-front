@@ -94,11 +94,11 @@ export default function ParentDashboard() {
     }
 
     return (
-        <div className="flex min-h-screen bg-slate-50 font-sans text-slate-900">
+        <div className="bg-ice text-navy flex min-h-screen font-sans">
             <ParentSidebar activeView={activeView} setActiveView={setActiveView} />
-            <div className="flex-1 min-w-0 flex flex-col">
+            <div className="ml-64 flex-1 flex flex-col min-h-screen bg-transparent">
                 <ParentHeader />
-                <main className="p-6 md:p-8 flex-1 overflow-y-auto">
+                <main className="flex-1 overflow-y-auto">
                     <div className="max-w-7xl mx-auto space-y-8 animate-fadeIn">
                         {/* Summary Section */}
                         <section className="bg-indigo-600 rounded-3xl p-8 text-white shadow-2xl shadow-indigo-200 relative overflow-hidden group">
@@ -128,8 +128,8 @@ export default function ParentDashboard() {
                                         key={child.id}
                                         onClick={() => setSelectedChildId(child.id)}
                                         className={`w-full text-left p-4 rounded-2xl border transition-all duration-200 group ${selectedChildId === child.id
-                                                ? "bg-indigo-50 border-indigo-200 ring-4 ring-indigo-50 shadow-sm"
-                                                : "bg-white border-slate-100 hover:border-indigo-100 hover:bg-slate-50"
+                                            ? "bg-indigo-50 border-indigo-200 ring-4 ring-indigo-50 shadow-sm"
+                                            : "bg-white border-slate-100 hover:border-indigo-100 hover:bg-slate-50"
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
@@ -204,8 +204,8 @@ export default function ParentDashboard() {
                                                             key={tab.id}
                                                             onClick={() => setActiveTab(tab.id as any)}
                                                             className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab.id
-                                                                    ? "bg-white text-indigo-600 shadow-sm"
-                                                                    : "text-slate-400 hover:text-slate-600"
+                                                                ? "bg-white text-indigo-600 shadow-sm"
+                                                                : "text-slate-400 hover:text-slate-600"
                                                                 }`}
                                                         >
                                                             {tab.label}

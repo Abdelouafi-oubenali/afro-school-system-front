@@ -515,25 +515,22 @@ export default function EnseignantDashboard() {
     if (!user) {
         return <Navigate to="/login" replace />;
     }
-
     if (!isTeacherRole(user.role)) {
-        return <Navigate to="/dashboard" replace />;
+        return <Navigate to="/" replace />;
     }
 
     return (
-        <div className="min-h-screen flex bg-[#f8fafc] font-sans">
+        <div className="bg-ice text-navy flex min-h-screen font-sans">
             <TeacherSidebar activeView={activeView} setActiveView={setActiveView} />
-
-            <div className="ml-64 flex-1 flex flex-col min-h-screen">
+            <div className="ml-64 flex-1 flex flex-col min-h-screen bg-transparent">
                 <TeacherHeader />
-
-                <main className="flex-1 p-8 space-y-6">
+                <main className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar space-y-8">
                     {activeView === "emploi" && (
                         <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300">
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                                 <div>
                                     <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Mon Emploi du Temps</h2>
-                                    <p className="text-sm text-slate-500 mt-1">Saison 2025-2026 • Vue hebdomadaire</p>
+                                    <p className="text-sm text-slate-500 mt-1">Consultez et exportez votre planning hebdomadaire</p>
                                 </div>
                                 <div className="flex items-center gap-3">
                                     {loadingEmploi && (
@@ -671,593 +668,599 @@ export default function EnseignantDashboard() {
                         </section>
                     )}
 
-                    {activeView === "notes" && (
-                        <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300 space-y-8">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Saisie des Notes</h2>
-                                    <p className="text-sm text-slate-500 mt-1">Évaluez vos élèves par séance et par matière</p>
-                                </div>
-                                {loadingNotes && (
-                                    <span className="text-sm font-medium text-teal flex items-center gap-2">
-                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Chargement...
-                                    </span>
-                                )}
-                            </div>
-
-                            <form onSubmit={handleCreateNote} className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Séance</label>
-                                        <div className="relative">
-                                            <select
-                                                value={selectedNoteSeanceId}
-                                                onChange={(e) => handleNoteSeanceChange(e.target.value)}
-                                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
-                                            >
-                                                <option value="">Sélectionnez une séance</option>
-                                                {teacherSeances.map((seance) => (
-                                                    <option key={seance.id} value={seance.id}>
-                                                        {DAY_LABELS[seance.jour]} {normalizeTime(seance.heureDebut)} | {seance.classeNom || seance.classeId}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Élève</label>
-                                        <div className="relative">
-                                            <select
-                                                value={selectedNoteEleveId}
-                                                onChange={(e) => setSelectedNoteEleveId(e.target.value)}
-                                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
-                                            >
-                                                <option value="">Sélectionnez un élève</option>
-                                                {noteClasseEleves.map((eleve) => (
-                                                    <option key={eleve.id} value={eleve.id}>{eleve.prenom} {eleve.nom}</option>
-                                                ))}
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Type d'évaluation</label>
-                                        <div className="relative">
-                                            <select
-                                                value={noteType}
-                                                onChange={(e) => setNoteType(e.target.value as NoteType)}
-                                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
-                                            >
-                                                <option value="DEVOIR">Devoir Continu</option>
-                                                <option value="EXAMEN">Examen Final</option>
-                                            </select>
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Ordre de l'éval.</label>
-                                        <input
-                                            type="number"
-                                            min="1"
-                                            value={noteNumeroExamen}
-                                            onChange={(e) => setNoteNumeroExamen(e.target.value)}
-                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Note (sur 20)</label>
-                                        <div className="relative">
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="20"
-                                                step="0.25"
-                                                value={noteValue}
-                                                onChange={(e) => setNoteValue(e.target.value)}
-                                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-bold text-lg"
-                                                placeholder="Ex: 15.5"
-                                            />
-                                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 font-bold">
-                                                / 20
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Appréciation / Commentaire</label>
-                                        <input
-                                            type="text"
-                                            value={noteCommentaire}
-                                            onChange={(e) => setNoteCommentaire(e.target.value)}
-                                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
-                                            placeholder="Optionnel : Très bon travail..."
-                                        />
-                                    </div>
-                                </div>
-
-                                {selectedNoteSeance && (
-                                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 shrink-0 flex items-center flex-wrap gap-x-8 gap-y-3 shadow-sm">
-                                        <div>
-                                            <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Classe active</p>
-                                            <p className="text-sm font-bold text-indigo-900 mt-0.5">{selectedNoteSeance.classeNom || selectedNoteSeance.classeId}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Matière</p>
-                                            <p className="text-sm font-bold text-indigo-900 mt-0.5">{selectedNoteSeance.matiereNom || selectedNoteSeance.matiereId}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Horaire du cours</p>
-                                            <p className="text-sm font-bold text-indigo-900 mt-0.5">{DAY_LABELS[selectedNoteSeance.jour]} {normalizeTime(selectedNoteSeance.heureDebut)} à {normalizeTime(selectedNoteSeance.heureFin)}</p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {notesSubmitError && (
-                                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
-                                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                        <p className="text-sm font-medium mt-0.5">{notesSubmitError}</p>
-                                    </div>
-                                )}
-                                {notesSubmitSuccess && (
-                                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 p-4 shadow-sm">
-                                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        <p className="text-sm font-medium mt-0.5">{notesSubmitSuccess}</p>
-                                    </div>
-                                )}
-
-                                <div className="flex justify-end pt-2">
-                                    <button
-                                        type="submit"
-                                        disabled={isSavingNote}
-                                        className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-sm font-bold px-8 py-3 rounded-xl shadow-[0_4px_14px_0_rgba(99,102,241,0.39)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.23)] hover:scale-[1.02] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:hover:scale-100 disabled:hover:translate-y-0"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
-                                        {isSavingNote ? "Enregistrement..." : "Valider la note"}
-                                    </button>
-                                </div>
-                            </form>
-
-                            <div className="pt-8 border-t border-slate-100">
-                                <div className="flex items-center justify-between gap-3 mb-5">
-                                    <h3 className="text-lg font-bold text-slate-800 tracking-tight">Historique des notes (Classe sélectionnée)</h3>
-                                </div>
-
-                                {notesError && (
-                                    <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
-                                        <p className="text-sm font-medium">{notesError}</p>
-                                    </div>
-                                )}
-
-                                {!selectedNoteSeance ? (
-                                    <div className="flex items-center justify-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-sm font-medium">
-                                        Sélectionnez une séance pour afficher les notes déjà enregistrées.
-                                    </div>
-                                ) : notesList.length === 0 ? (
-                                    <div className="flex items-center justify-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-sm font-medium">
-                                        Aucune note enregistrée pour cette séance.
-                                    </div>
-                                ) : (
-                                    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
-                                        <div className="overflow-x-auto">
-                                            <table className="min-w-full text-sm text-left">
-                                                <thead>
-                                                    <tr className="bg-slate-50 border-b border-slate-200">
-                                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Élève</th>
-                                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
-                                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">N° Éval.</th>
-                                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Note</th>
-                                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Appréciation</th>
-                                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-100 bg-white">
-                                                    {notesList.map((note) => (
-                                                        <tr key={note.id} className="hover:bg-slate-50/80 transition-colors group">
-                                                            <td className="px-5 py-4 whitespace-nowrap">
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold border border-slate-200">
-                                                                        {note.elevePrenom?.charAt(0)}{note.eleveNom?.charAt(0)}
-                                                                    </div>
-                                                                    <span className="font-semibold text-slate-800">{`${note.elevePrenom || ""} ${note.eleveNom || ""}`.trim() || note.eleveId}</span>
-                                                                </div>
-                                                            </td>
-                                                            <td className="px-5 py-4 whitespace-nowrap">
-                                                                {editingNoteId === note.id ? (
-                                                                    <select
-                                                                        value={editNoteType}
-                                                                        onChange={(e) => setEditNoteType(e.target.value as NoteType)}
-                                                                        className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
-                                                                    >
-                                                                        <option value="DEVOIR">DEVOIR</option>
-                                                                        <option value="EXAMEN">EXAMEN</option>
-                                                                    </select>
-                                                                ) : (
-                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
-                                                                        {note.type_note || note.typeNote || "-"}
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-5 py-4 whitespace-nowrap text-slate-600 font-medium">
-                                                                {editingNoteId === note.id ? (
-                                                                    <input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        value={editNoteNumeroExamen}
-                                                                        onChange={(e) => setEditNoteNumeroExamen(e.target.value)}
-                                                                        className="w-16 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 outline-none focus:ring-2 focus:ring-indigo-200 text-center"
-                                                                    />
-                                                                ) : `#${note.numeroExamen}`}
-                                                            </td>
-                                                            <td className="px-5 py-4 whitespace-nowrap">
-                                                                {editingNoteId === note.id ? (
-                                                                    <input
-                                                                        type="number"
-                                                                        min="0"
-                                                                        max="20"
-                                                                        step="0.25"
-                                                                        value={editNoteValeur}
-                                                                        onChange={(e) => setEditNoteValeur(e.target.value)}
-                                                                        className="w-20 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-sm font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-200 text-center"
-                                                                    />
-                                                                ) : (
-                                                                    <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-sm font-bold border ${note.valeur !== undefined && note.valeur >= 10 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
-                                                                        {note.valeur} / 20
-                                                                    </span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-5 py-4 text-slate-600 text-sm w-1/3">
-                                                                {editingNoteId === note.id ? (
-                                                                    <input
-                                                                        type="text"
-                                                                        value={editNoteCommentaire}
-                                                                        onChange={(e) => setEditNoteCommentaire(e.target.value)}
-                                                                        className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-800 outline-none focus:ring-2 focus:ring-indigo-200"
-                                                                        placeholder="Appréciation..."
-                                                                    />
-                                                                ) : (
-                                                                    <span className="italic">{note.commentaire || <span className="text-slate-400 not-italic">-</span>}</span>
-                                                                )}
-                                                            </td>
-                                                            <td className="px-5 py-4 whitespace-nowrap text-right">
-                                                                {editingNoteId === note.id ? (
-                                                                    <div className="flex items-center justify-end gap-2">
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={cancelEditNote}
-                                                                            className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-sm"
-                                                                        >
-                                                                            Annuler
-                                                                        </button>
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => saveEditNote(note)}
-                                                                            disabled={isUpdatingNote}
-                                                                            className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-1.5"
-                                                                        >
-                                                                            {isUpdatingNote ? (
-                                                                                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                                                            ) : (
-                                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                                            )}
-                                                                            Sauver
-                                                                        </button>
-                                                                    </div>
-                                                                ) : (
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => startEditNote(note)}
-                                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
-                                                                        title="Modifier la note"
-                                                                    >
-                                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                                                                    </button>
-                                                                )}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </section>
-                    )}
-
-                    {activeView === "classes" && (
-                        <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                                <div>
-                                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Mes Classes</h2>
-                                    <p className="text-sm text-slate-500 mt-1">Vos groupes d'élèves assignés</p>
-                                </div>
-                                {loadingClasses && (
-                                    <span className="text-sm font-medium text-teal flex items-center gap-2">
-                                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                        </svg>
-                                        Chargement...
-                                    </span>
-                                )}
-                            </div>
-
-                            {!teacherUuid && (
-                                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
-                                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                    <div>
-                                        <p className="font-semibold text-sm">Identifiant invalide</p>
-                                        <p className="text-sm mt-1 opacity-90">L'identifiant enseignant ({teacherId || "absent"}) est invalide.</p>
-                                    </div>
-                                </div>
-                            )}
-
-                            {classesError && (
-                                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
-                                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                    <p className="text-sm font-medium mt-0.5">{classesError}</p>
-                                </div>
-                            )}
-
-                            {!loadingClasses && teacherClasses.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
-                                    <svg className="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                                    <p className="text-base font-semibold text-slate-700 mb-1">Aucune classe trouvée</p>
-                                    <p className="text-sm text-slate-500 max-w-sm">Vous n'avez actuellement aucune classe assignée.</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-                                    {teacherClasses.map((classe) => (
-                                        <article key={classe.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
-                                            <div className="flex items-start justify-between gap-4 mb-5">
-                                                <div>
-                                                    <h3 className="text-lg font-bold text-slate-800">{classe.name}</h3>
-                                                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 mt-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
-                                                        Niveau: {classe.levelClasse || "-"}
-                                                    </span>
-                                                </div>
-                                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-sm font-semibold border border-teal-100">
-                                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                                                    {classe.eleves?.length || 0} élève(s)
-                                                </span>
-                                            </div>
-
-                                            <div className="grid grid-cols-2 gap-3 mb-5">
-                                                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 flex items-center gap-3">
-                                                    <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
-                                                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Année</p>
-                                                        <p className="text-sm font-bold text-slate-700">{classe.anneeScolaire || "-"}</p>
-                                                    </div>
-                                                </div>
-                                                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 flex items-center gap-3">
-                                                    <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
-                                                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Salle</p>
-                                                        <p className="text-sm font-bold text-slate-700 truncate">{classe.salleAttribuee || "Non définie"}</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div>
-                                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 ml-1">Liste des élèves</p>
-                                                {!classe.eleves || classe.eleves.length === 0 ? (
-                                                    <p className="text-sm text-slate-500 italic ml-1">Aucun élève dans cette classe.</p>
-                                                ) : (
-                                                    <div className="space-y-2 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
-                                                        {classe.eleves.map((eleve) => (
-                                                            <div key={eleve.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors px-4 py-2.5">
-                                                                <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold border border-indigo-100">
-                                                                    {eleve.prenom?.charAt(0)}{eleve.nom?.charAt(0)}
-                                                                </div>
-                                                                <div>
-                                                                    <p className="text-sm font-semibold text-slate-700">{eleve.prenom} {eleve.nom}</p>
-                                                                    <p className="text-xs text-slate-500">{eleve.email}</p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </article>
-                                    ))}
-                                </div>
-                            )}
-                        </section>
-                    )}
-
-                    {activeView === "absences" && (
-                        <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300">
-                            <div className="mb-8">
-                                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Déclaration des absences</h2>
-                                <p className="text-sm text-slate-500 mt-1">Gérez les présences pour vos séances assignées</p>
-                            </div>
-
-                            {seancesError && (
-                                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
-                                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                    <p className="text-sm font-medium mt-0.5">{seancesError}</p>
-                                </div>
-                            )}
-
-                            <form onSubmit={handleSubmitAbsence} className="space-y-8">
-                                <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-6">
-                                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Informations de la séance</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-slate-600 ml-1">Séance concernée</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={selectedSeanceId}
-                                                    onChange={(e) => handleSeanceChange(e.target.value)}
-                                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm"
-                                                >
-                                                    <option value="">Sélectionnez une séance</option>
-                                                    {teacherSeances.map((seance) => (
-                                                        <option key={seance.id} value={seance.id}>
-                                                            {DAY_LABELS[seance.jour]} {normalizeTime(seance.heureDebut)} | {seance.matiereNom || seance.matiereId}
-                                                        </option>
-                                                    ))}
-                                                </select>
-                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-slate-600 ml-1">Date d'enregistrement</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="date"
-                                                    value={date}
-                                                    onChange={(e) => setDate(e.target.value)}
-                                                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm date-input-modern text-left"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-slate-600 ml-1">Type de déclaration</label>
-                                            <div className="relative">
-                                                <select
-                                                    value={type}
-                                                    onChange={(e) => setType(e.target.value as AbsenceType)}
-                                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm"
-                                                >
-                                                    <option value="ABSENCE">Absence (Non justifiée)</option>
-                                                    <option value="RETARD">Retard</option>
-                                                </select>
-                                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
-                                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="space-y-1.5">
-                                            <label className="text-xs font-bold text-slate-600 ml-1">Motif (optionnel)</label>
-                                            <input
-                                                type="text"
-                                                value={motif}
-                                                onChange={(e) => setMotif(e.target.value)}
-                                                placeholder="Ex: Raison médicale..."
-                                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div>
-                                            <h3 className="text-lg font-bold text-slate-800 tracking-tight">Liste des élèves</h3>
-                                            <p className="text-xs text-slate-500 mt-0.5">Cochez les élèves concernés par l'absence ou le retard</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={toggleAllEleves}
-                                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
-                                        >
-                                            {selectedEleveIds.length === classeEleves.length && classeEleves.length > 0 ? "Tout désélectionner" : "Tout sélectionner"}
-                                        </button>
-                                    </div>
-
-                                    {loadingEleves || loadingSeances ? (
-                                        <div className="flex flex-col items-center justify-center p-10 bg-slate-50 rounded-2xl border border-slate-100">
-                                            <svg className="animate-spin h-6 w-6 text-indigo-500 mb-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                                            <p className="text-sm font-medium text-slate-600">Chargement des élèves...</p>
-                                        </div>
-                                    ) : !selectedSeance ? (
-                                        <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                                            <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                            <p className="text-sm font-medium text-slate-500 text-center max-w-sm">Choisissez d'abord une séance ci-dessus pour afficher la liste des élèves.</p>
-                                        </div>
-                                    ) : classeEleves.length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
-                                            <p className="text-sm font-medium text-slate-500 text-center">Aucun élève trouvé pour cette séance.</p>
-                                        </div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                                            {classeEleves.map((eleve) => {
-                                                const isSelected = selectedEleveIds.includes(eleve.id);
-                                                return (
-                                                    <label
-                                                        key={eleve.id}
-                                                        className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-200 shadow-sm ${isSelected ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200 scale-[1.02]' : 'bg-white border-slate-200 hover:border-indigo-100 hover:bg-slate-50 hover:shadow-md'}`}
-                                                    >
-                                                        <div className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-md border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300 text-transparent'} transition-colors`}>
-                                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
-                                                        </div>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={() => toggleEleve(eleve.id)}
-                                                            className="hidden"
-                                                        />
-                                                        <div className="flex items-center gap-2.5 overflow-hidden">
-                                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isSelected ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
-                                                                {eleve.prenom?.charAt(0)}{eleve.nom?.charAt(0)}
-                                                            </div>
-                                                            <span className={`text-sm truncate font-medium ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
-                                                                {eleve.prenom} <span className="uppercase">{eleve.nom}</span>
-                                                            </span>
-                                                        </div>
-                                                    </label>
-                                                );
-                                            })}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {submitError && (
-                                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm animate-fadeUp">
-                                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                                        <p className="text-sm font-medium mt-0.5">{submitError}</p>
-                                    </div>
-                                )}
-
-                                {submitSuccess && (
-                                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 p-4 shadow-sm animate-fadeUp">
-                                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        <p className="text-sm font-medium mt-0.5">{submitSuccess}</p>
-                                    </div>
-                                )}
-
-                                <div className="flex justify-end pt-4 border-t border-slate-100 mt-8">
-                                    <button
-                                        type="submit"
-                                        disabled={isSubmitting || selectedEleveIds.length === 0}
-                                        className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-bold px-8 py-3 rounded-xl shadow-[0_4px_14px_0_rgba(20,184,166,0.39)] hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] hover:scale-[1.02] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:shadow-none disabled:bg-slate-300 disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500"
-                                    >
-                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                        {isSubmitting ? "Enregistrement..." : `Valider ${selectedEleveIds.length > 0 ? `(${selectedEleveIds.length})` : ''} absence${selectedEleveIds.length > 1 ? 's' : ''}`}
-                                    </button>
-                                </div>
-                            </form>
-                        </section>
-                    )}
-                </main>
+{
+    activeView === "notes" && (
+        <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300 space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Saisie des Notes</h2>
+                    <p className="text-sm text-slate-500 mt-1">Évaluez vos élèves par séance et par matière</p>
+                </div>
+                {loadingNotes && (
+                    <span className="text-sm font-medium text-teal flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Chargement...
+                    </span>
+                )}
             </div>
-        </div>
+
+            <form onSubmit={handleCreateNote} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Séance</label>
+                        <div className="relative">
+                            <select
+                                value={selectedNoteSeanceId}
+                                onChange={(e) => handleNoteSeanceChange(e.target.value)}
+                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
+                            >
+                                <option value="">Sélectionnez une séance</option>
+                                {teacherSeances.map((seance) => (
+                                    <option key={seance.id} value={seance.id}>
+                                        {DAY_LABELS[seance.jour]} {normalizeTime(seance.heureDebut)} | {seance.classeNom || seance.classeId}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Élève</label>
+                        <div className="relative">
+                            <select
+                                value={selectedNoteEleveId}
+                                onChange={(e) => setSelectedNoteEleveId(e.target.value)}
+                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
+                            >
+                                <option value="">Sélectionnez un élève</option>
+                                {noteClasseEleves.map((eleve) => (
+                                    <option key={eleve.id} value={eleve.id}>{eleve.prenom} {eleve.nom}</option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Type d'évaluation</label>
+                        <div className="relative">
+                            <select
+                                value={noteType}
+                                onChange={(e) => setNoteType(e.target.value as NoteType)}
+                                className="w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
+                            >
+                                <option value="DEVOIR">Devoir Continu</option>
+                                <option value="EXAMEN">Examen Final</option>
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Ordre de l'éval.</label>
+                        <input
+                            type="number"
+                            min="1"
+                            value={noteNumeroExamen}
+                            onChange={(e) => setNoteNumeroExamen(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Note (sur 20)</label>
+                        <div className="relative">
+                            <input
+                                type="number"
+                                min="0"
+                                max="20"
+                                step="0.25"
+                                value={noteValue}
+                                onChange={(e) => setNoteValue(e.target.value)}
+                                className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-bold text-lg"
+                                placeholder="Ex: 15.5"
+                            />
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400 font-bold">
+                                / 20
+                            </div>
+                        </div>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">Appréciation / Commentaire</label>
+                        <input
+                            type="text"
+                            value={noteCommentaire}
+                            onChange={(e) => setNoteCommentaire(e.target.value)}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100 transition-all font-medium"
+                            placeholder="Optionnel : Très bon travail..."
+                        />
+                    </div>
+                </div>
+
+                {selectedNoteSeance && (
+                    <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 shrink-0 flex items-center flex-wrap gap-x-8 gap-y-3 shadow-sm">
+                        <div>
+                            <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Classe active</p>
+                            <p className="text-sm font-bold text-indigo-900 mt-0.5">{selectedNoteSeance.classeNom || selectedNoteSeance.classeId}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Matière</p>
+                            <p className="text-sm font-bold text-indigo-900 mt-0.5">{selectedNoteSeance.matiereNom || selectedNoteSeance.matiereId}</p>
+                        </div>
+                        <div>
+                            <p className="text-[10px] font-bold tracking-wider text-indigo-400 uppercase">Horaire du cours</p>
+                            <p className="text-sm font-bold text-indigo-900 mt-0.5">{DAY_LABELS[selectedNoteSeance.jour]} {normalizeTime(selectedNoteSeance.heureDebut)} à {normalizeTime(selectedNoteSeance.heureFin)}</p>
+                        </div>
+                    </div>
+                )}
+
+                {notesSubmitError && (
+                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
+                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <p className="text-sm font-medium mt-0.5">{notesSubmitError}</p>
+                    </div>
+                )}
+                {notesSubmitSuccess && (
+                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 p-4 shadow-sm">
+                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <p className="text-sm font-medium mt-0.5">{notesSubmitSuccess}</p>
+                    </div>
+                )}
+
+                <div className="flex justify-end pt-2">
+                    <button
+                        type="submit"
+                        disabled={isSavingNote}
+                        className="flex items-center gap-2 bg-gradient-to-r from-indigo-500 to-indigo-600 text-white text-sm font-bold px-8 py-3 rounded-xl shadow-[0_4px_14px_0_rgba(99,102,241,0.39)] hover:shadow-[0_6px_20px_rgba(99,102,241,0.23)] hover:scale-[1.02] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-70 disabled:hover:scale-100 disabled:hover:translate-y-0"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" /></svg>
+                        {isSavingNote ? "Enregistrement..." : "Valider la note"}
+                    </button>
+                </div>
+            </form>
+
+            <div className="pt-8 border-t border-slate-100">
+                <div className="flex items-center justify-between gap-3 mb-5">
+                    <h3 className="text-lg font-bold text-slate-800 tracking-tight">Historique des notes (Classe sélectionnée)</h3>
+                </div>
+
+                {notesError && (
+                    <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
+                        <p className="text-sm font-medium">{notesError}</p>
+                    </div>
+                )}
+
+                {!selectedNoteSeance ? (
+                    <div className="flex items-center justify-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-sm font-medium">
+                        Sélectionnez une séance pour afficher les notes déjà enregistrées.
+                    </div>
+                ) : notesList.length === 0 ? (
+                    <div className="flex items-center justify-center p-8 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-slate-500 text-sm font-medium">
+                        Aucune note enregistrée pour cette séance.
+                    </div>
+                ) : (
+                    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full text-sm text-left">
+                                <thead>
+                                    <tr className="bg-slate-50 border-b border-slate-200">
+                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Élève</th>
+                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Type</th>
+                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">N° Éval.</th>
+                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider">Note</th>
+                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider min-w-[200px]">Appréciation</th>
+                                        <th className="px-5 py-3.5 text-xs font-bold text-slate-500 uppercase tracking-wider text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-100 bg-white">
+                                    {notesList.map((note) => (
+                                        <tr key={note.id} className="hover:bg-slate-50/80 transition-colors group">
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-7 h-7 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold border border-slate-200">
+                                                        {note.elevePrenom?.charAt(0)}{note.eleveNom?.charAt(0)}
+                                                    </div>
+                                                    <span className="font-semibold text-slate-800">{`${note.elevePrenom || ""} ${note.eleveNom || ""}`.trim() || note.eleveId}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                {editingNoteId === note.id ? (
+                                                    <select
+                                                        value={editNoteType}
+                                                        onChange={(e) => setEditNoteType(e.target.value as NoteType)}
+                                                        className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400"
+                                                    >
+                                                        <option value="DEVOIR">DEVOIR</option>
+                                                        <option value="EXAMEN">EXAMEN</option>
+                                                    </select>
+                                                ) : (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                                        {note.type_note || note.typeNote || "-"}
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-slate-600 font-medium">
+                                                {editingNoteId === note.id ? (
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        value={editNoteNumeroExamen}
+                                                        onChange={(e) => setEditNoteNumeroExamen(e.target.value)}
+                                                        className="w-16 rounded-lg border border-indigo-200 bg-indigo-50 px-2 py-1.5 text-xs font-semibold text-indigo-800 outline-none focus:ring-2 focus:ring-indigo-200 text-center"
+                                                    />
+                                                ) : `#${note.numeroExamen}`}
+                                            </td>
+                                            <td className="px-5 py-4 whitespace-nowrap">
+                                                {editingNoteId === note.id ? (
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        max="20"
+                                                        step="0.25"
+                                                        value={editNoteValeur}
+                                                        onChange={(e) => setEditNoteValeur(e.target.value)}
+                                                        className="w-20 rounded-lg border border-emerald-300 bg-emerald-50 px-2 py-1.5 text-sm font-bold text-emerald-800 outline-none focus:ring-2 focus:ring-emerald-200 text-center"
+                                                    />
+                                                ) : (
+                                                    <span className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-sm font-bold border ${note.valeur !== undefined && note.valeur >= 10 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                                                        {note.valeur} / 20
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-5 py-4 text-slate-600 text-sm w-1/3">
+                                                {editingNoteId === note.id ? (
+                                                    <input
+                                                        type="text"
+                                                        value={editNoteCommentaire}
+                                                        onChange={(e) => setEditNoteCommentaire(e.target.value)}
+                                                        className="w-full rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-medium text-indigo-800 outline-none focus:ring-2 focus:ring-indigo-200"
+                                                        placeholder="Appréciation..."
+                                                    />
+                                                ) : (
+                                                    <span className="italic">{note.commentaire || <span className="text-slate-400 not-italic">-</span>}</span>
+                                                )}
+                                            </td>
+                                            <td className="px-5 py-4 whitespace-nowrap text-right">
+                                                {editingNoteId === note.id ? (
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={cancelEditNote}
+                                                            className="px-3 py-1.5 rounded-lg border border-slate-300 bg-white text-slate-700 text-xs font-semibold hover:bg-slate-50 transition-colors shadow-sm"
+                                                        >
+                                                            Annuler
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => saveEditNote(note)}
+                                                            disabled={isUpdatingNote}
+                                                            className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-1.5"
+                                                        >
+                                                            {isUpdatingNote ? (
+                                                                <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                                                            ) : (
+                                                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                                            )}
+                                                            Sauver
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => startEditNote(note)}
+                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                                        title="Modifier la note"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+            </div>
+        </section>
+    )
+}
+
+{
+    activeView === "classes" && (
+        <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Mes Classes</h2>
+                    <p className="text-sm text-slate-500 mt-1">Vos groupes d'élèves assignés</p>
+                </div>
+                {loadingClasses && (
+                    <span className="text-sm font-medium text-teal flex items-center gap-2">
+                        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Chargement...
+                    </span>
+                )}
+            </div>
+
+            {!teacherUuid && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <div>
+                        <p className="font-semibold text-sm">Identifiant invalide</p>
+                        <p className="text-sm mt-1 opacity-90">L'identifiant enseignant ({teacherId || "absent"}) est invalide.</p>
+                    </div>
+                </div>
+            )}
+
+            {classesError && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <p className="text-sm font-medium mt-0.5">{classesError}</p>
+                </div>
+            )}
+
+            {!loadingClasses && teacherClasses.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 text-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50">
+                    <svg className="w-12 h-12 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                    <p className="text-base font-semibold text-slate-700 mb-1">Aucune classe trouvée</p>
+                    <p className="text-sm text-slate-500 max-w-sm">Vous n'avez actuellement aucune classe assignée.</p>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+                    {teacherClasses.map((classe) => (
+                        <article key={classe.id} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow">
+                            <div className="flex items-start justify-between gap-4 mb-5">
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-800">{classe.name}</h3>
+                                    <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-1 mt-1 text-xs font-medium text-slate-600 ring-1 ring-inset ring-slate-500/10">
+                                        Niveau: {classe.levelClasse || "-"}
+                                    </span>
+                                </div>
+                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-sm font-semibold border border-teal-100">
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+                                    {classe.eleves?.length || 0} élève(s)
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-3 mb-5">
+                                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
+                                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Année</p>
+                                        <p className="text-sm font-bold text-slate-700">{classe.anneeScolaire || "-"}</p>
+                                    </div>
+                                </div>
+                                <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 flex items-center gap-3">
+                                    <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
+                                        <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                    </div>
+                                    <div>
+                                        <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Salle</p>
+                                        <p className="text-sm font-bold text-slate-700 truncate">{classe.salleAttribuee || "Non définie"}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-3 ml-1">Liste des élèves</p>
+                                {!classe.eleves || classe.eleves.length === 0 ? (
+                                    <p className="text-sm text-slate-500 italic ml-1">Aucun élève dans cette classe.</p>
+                                ) : (
+                                    <div className="space-y-2 max-h-52 overflow-y-auto pr-2 custom-scrollbar">
+                                        {classe.eleves.map((eleve) => (
+                                            <div key={eleve.id} className="flex items-center gap-3 rounded-xl border border-slate-100 bg-white hover:bg-slate-50 transition-colors px-4 py-2.5">
+                                                <div className="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs font-bold border border-indigo-100">
+                                                    {eleve.prenom?.charAt(0)}{eleve.nom?.charAt(0)}
+                                                </div>
+                                                <div>
+                                                    <p className="text-sm font-semibold text-slate-700">{eleve.prenom} {eleve.nom}</p>
+                                                    <p className="text-xs text-slate-500">{eleve.email}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </article>
+                    ))}
+                </div>
+            )}
+        </section>
+    )
+}
+
+{
+    activeView === "absences" && (
+        <section className="bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-6 md:p-8 animate-fadeUp transition-all duration-300">
+            <div className="mb-8">
+                <h2 className="text-2xl font-bold text-slate-800 tracking-tight">Déclaration des absences</h2>
+                <p className="text-sm text-slate-500 mt-1">Gérez les présences pour vos séances assignées</p>
+            </div>
+
+            {seancesError && (
+                <div className="mb-6 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm">
+                    <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                    <p className="text-sm font-medium mt-0.5">{seancesError}</p>
+                </div>
+            )}
+
+            <form onSubmit={handleSubmitAbsence} className="space-y-8">
+                <div className="p-6 rounded-2xl border border-slate-100 bg-slate-50/50 space-y-6">
+                    <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">Informations de la séance</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5">
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-600 ml-1">Séance concernée</label>
+                            <div className="relative">
+                                <select
+                                    value={selectedSeanceId}
+                                    onChange={(e) => handleSeanceChange(e.target.value)}
+                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm"
+                                >
+                                    <option value="">Sélectionnez une séance</option>
+                                    {teacherSeances.map((seance) => (
+                                        <option key={seance.id} value={seance.id}>
+                                            {DAY_LABELS[seance.jour]} {normalizeTime(seance.heureDebut)} | {seance.matiereNom || seance.matiereId}
+                                        </option>
+                                    ))}
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-600 ml-1">Date d'enregistrement</label>
+                            <div className="relative">
+                                <input
+                                    type="date"
+                                    value={date}
+                                    onChange={(e) => setDate(e.target.value)}
+                                    className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm date-input-modern text-left"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-600 ml-1">Type de déclaration</label>
+                            <div className="relative">
+                                <select
+                                    value={type}
+                                    onChange={(e) => setType(e.target.value as AbsenceType)}
+                                    className="w-full appearance-none rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm"
+                                >
+                                    <option value="ABSENCE">Absence (Non justifiée)</option>
+                                    <option value="RETARD">Retard</option>
+                                </select>
+                                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
+                                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1.5">
+                            <label className="text-xs font-bold text-slate-600 ml-1">Motif (optionnel)</label>
+                            <input
+                                type="text"
+                                value={motif}
+                                onChange={(e) => setMotif(e.target.value)}
+                                placeholder="Ex: Raison médicale..."
+                                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all shadow-sm"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div className="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-slate-800 tracking-tight">Liste des élèves</h3>
+                            <p className="text-xs text-slate-500 mt-0.5">Cochez les élèves concernés par l'absence ou le retard</p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={toggleAllEleves}
+                            className="text-xs font-bold text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-indigo-100"
+                        >
+                            {selectedEleveIds.length === classeEleves.length && classeEleves.length > 0 ? "Tout désélectionner" : "Tout sélectionner"}
+                        </button>
+                    </div>
+
+                    {loadingEleves || loadingSeances ? (
+                        <div className="flex flex-col items-center justify-center p-10 bg-slate-50 rounded-2xl border border-slate-100">
+                            <svg className="animate-spin h-6 w-6 text-indigo-500 mb-3" viewBox="0 0 24 24" fill="none"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                            <p className="text-sm font-medium text-slate-600">Chargement des élèves...</p>
+                        </div>
+                    ) : !selectedSeance ? (
+                        <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                            <svg className="w-10 h-10 text-slate-300 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                            <p className="text-sm font-medium text-slate-500 text-center max-w-sm">Choisissez d'abord une séance ci-dessus pour afficher la liste des élèves.</p>
+                        </div>
+                    ) : classeEleves.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center p-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                            <p className="text-sm font-medium text-slate-500 text-center">Aucun élève trouvé pour cette séance.</p>
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            {classeEleves.map((eleve) => {
+                                const isSelected = selectedEleveIds.includes(eleve.id);
+                                return (
+                                    <label
+                                        key={eleve.id}
+                                        className={`flex items-center gap-3 rounded-xl border p-3 cursor-pointer transition-all duration-200 shadow-sm ${isSelected ? 'bg-indigo-50 border-indigo-200 ring-1 ring-indigo-200 scale-[1.02]' : 'bg-white border-slate-200 hover:border-indigo-100 hover:bg-slate-50 hover:shadow-md'}`}
+                                    >
+                                        <div className={`flex-shrink-0 flex items-center justify-center w-5 h-5 rounded-md border ${isSelected ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-300 text-transparent'} transition-colors`}>
+                                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            checked={isSelected}
+                                            onChange={() => toggleEleve(eleve.id)}
+                                            className="hidden"
+                                        />
+                                        <div className="flex items-center gap-2.5 overflow-hidden">
+                                            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${isSelected ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-500'}`}>
+                                                {eleve.prenom?.charAt(0)}{eleve.nom?.charAt(0)}
+                                            </div>
+                                            <span className={`text-sm truncate font-medium ${isSelected ? 'text-indigo-900' : 'text-slate-700'}`}>
+                                                {eleve.prenom} <span className="uppercase">{eleve.nom}</span>
+                                            </span>
+                                        </div>
+                                    </label>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+
+                {submitError && (
+                    <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 text-red-700 p-4 shadow-sm animate-fadeUp">
+                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <p className="text-sm font-medium mt-0.5">{submitError}</p>
+                    </div>
+                )}
+
+                {submitSuccess && (
+                    <div className="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 text-emerald-700 p-4 shadow-sm animate-fadeUp">
+                        <svg className="w-5 h-5 flex-shrink-0 mt-0.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <p className="text-sm font-medium mt-0.5">{submitSuccess}</p>
+                    </div>
+                )}
+
+                <div className="flex justify-end pt-4 border-t border-slate-100 mt-8">
+                    <button
+                        type="submit"
+                        disabled={isSubmitting || selectedEleveIds.length === 0}
+                        className="flex items-center gap-2 bg-gradient-to-r from-teal-500 to-teal-600 text-white text-sm font-bold px-8 py-3 rounded-xl shadow-[0_4px_14px_0_rgba(20,184,166,0.39)] hover:shadow-[0_6px_20px_rgba(20,184,166,0.23)] hover:scale-[1.02] hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:shadow-none disabled:bg-slate-300 disabled:from-slate-300 disabled:to-slate-300 disabled:text-slate-500"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        {isSubmitting ? "Enregistrement..." : `Valider ${selectedEleveIds.length > 0 ? `(${selectedEleveIds.length})` : ''} absence${selectedEleveIds.length > 1 ? 's' : ''}`}
+                    </button>
+                </div>
+            </form>
+        </section>
+    )
+}
+                </main >
+            </div >
+        </div >
     );
 }

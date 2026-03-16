@@ -38,54 +38,65 @@ export default function StudentSidebar({ activeView, setActiveView }: StudentSid
     ];
 
     return (
-        <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-slate-200">
-            <div className="p-6">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-indigo-200">
-                        <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                        </svg>
-                    </div>
-                    <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-700 to-indigo-500">Espace Élève</span>
+        <aside className="fixed top-0 left-0 w-64 min-h-screen bg-navy flex flex-col z-50 shadow-2xl transition-all duration-300">
+            {/* Logo */}
+            <div className="flex items-center gap-3 px-6 py-7 border-b border-white/10">
+                <div className="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0E9E8E,#16BCA8)' }}>
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3L1 9l11 6 9-4.91V17h2V9L12 3zm0 2.18L20.49 9 12 12.82 3.51 9 12 5.18zM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 className="font-display text-white text-[15px] font-bold tracking-wide">Afro-School</h1>
+                    <span className="text-teal-lt text-[10px] font-semibold tracking-widest uppercase opacity-80">System Élève</span>
                 </div>
             </div>
 
-            <nav className="flex-1 px-4 space-y-2 mt-4">
+            <nav className="flex-1 py-6 overflow-y-auto px-3 space-y-1.5">
+                <p className="px-3 pt-2 pb-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/40">Principal</p>
+
                 {menuItems.map((item) => (
                     <button
                         key={item.id}
                         onClick={() => setActiveView(item.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${activeView === item.id
-                            ? "bg-indigo-50 text-indigo-700 shadow-sm ring-1 ring-indigo-200/50"
-                            : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 group ${activeView === item.id
+                            ? "bg-white/10 text-white shadow-inner"
+                            : "text-white/60 hover:bg-white/5 hover:text-white"
                             }`}
                     >
-                        {item.icon}
+                        <div className={`p-1.5 rounded-lg transition-colors ${activeView === item.id ? "bg-teal/20 text-teal" : "bg-white/5 text-white/60 group-hover:text-teal"}`}>
+                            {item.icon}
+                        </div>
                         {item.label}
                     </button>
                 ))}
 
+                <p className="px-3 pt-6 pb-2 text-[10px] font-bold tracking-[0.15em] uppercase text-white/40">Communication</p>
+
                 <Link
                     to="/chat"
-                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-all"
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/60 hover:bg-white/5 hover:text-white transition-all group"
                 >
-                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                    </svg>
+                    <div className="p-1.5 rounded-lg bg-white/5 text-white/60 group-hover:text-blue-400 transition-colors">
+                        <svg className="w-[18px] h-[18px]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
                     Messagerie
                 </Link>
             </nav>
 
-            <div className="p-4 mt-auto">
-                <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-5 text-white shadow-xl shadow-indigo-200 relative overflow-hidden group">
-                    <div className="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-2xl group-hover:bg-white/20 transition-all duration-500"></div>
-                    <p className="text-xs font-semibold text-indigo-100 uppercase tracking-widest mb-1">Aide</p>
-                    <p className="text-sm font-bold mb-3">Besoin d'assistance ?</p>
-                    <button className="w-full bg-white text-indigo-600 text-xs font-bold py-2.5 rounded-xl hover:bg-indigo-50 transition-colors shadow-sm">
-                        Contacter le support
-                    </button>
+            <div className="p-4 mx-3 mb-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center text-[13px] font-bold text-navy flex-shrink-0" style={{ background: 'linear-gradient(135deg,#0E9E8E,#16BCA8)' }}>
+                        ST
+                    </div>
+                    <div className="min-w-0 flex-1">
+                        <p className="text-white text-sm font-semibold truncate leading-tight">Mon Espace</p>
+                        <span className="text-teal-lt text-[11px] font-medium block mt-0.5">Élève Connecté</span>
+                    </div>
                 </div>
             </div>
-        </aside>
+        </aside >
     );
 }

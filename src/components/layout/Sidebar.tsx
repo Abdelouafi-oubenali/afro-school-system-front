@@ -14,8 +14,8 @@ export default function Sidebar() {
                     </svg>
                 </div>
                 <div>
-                    <h1 className="font-display text-white text-[17px] leading-tight">EduManager</h1>
-                    <span className="text-teal-lt text-[10px] font-semibold tracking-widest uppercase">Gestion Scolaire</span>
+                    <h1 className="font-display text-white text-[15px] font-bold tracking-wide">Afro-School</h1>
+                    <span className="text-teal-lt text-[10px] font-semibold tracking-widest uppercase opacity-80">System Admin</span>
                 </div>
             </div>
 
